@@ -11,9 +11,13 @@ class TransactionChartWidget extends ChartWidget
 {
     protected ?string $heading = 'Trend Transaksi 7 Hari Terakhir';
 
+    protected ?string $description = 'Perbandingan setoran dan penjualan dalam kg';
+
     protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';
+
+    protected ?string $maxHeight = '280px';
 
     protected function getData(): array
     {
@@ -23,7 +27,7 @@ class TransactionChartWidget extends ChartWidget
 
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
-            $labels[] = $date->format('d M');
+            $labels[] = $date->translatedFormat('d M');
 
             $purchaseData[] = Transaction::whereDate('transaction_date', $date)->sum('weight_kg');
             $salesData[] = Sale::whereDate('sale_date', $date)->sum('weight_kg');
@@ -34,16 +38,26 @@ class TransactionChartWidget extends ChartWidget
                 [
                     'label' => 'Setoran (kg)',
                     'data' => $purchaseData,
-                    'backgroundColor' => 'rgba(59, 130, 246, 0.5)',
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
                     'borderColor' => 'rgb(59, 130, 246)',
                     'fill' => true,
+                    'tension' => 0.4,
+                    'pointBackgroundColor' => 'rgb(59, 130, 246)',
+                    'pointBorderColor' => '#fff',
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
                 ],
                 [
                     'label' => 'Penjualan (kg)',
                     'data' => $salesData,
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.5)',
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
                     'borderColor' => 'rgb(16, 185, 129)',
                     'fill' => true,
+                    'tension' => 0.4,
+                    'pointBackgroundColor' => 'rgb(16, 185, 129)',
+                    'pointBorderColor' => '#fff',
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
                 ],
             ],
             'labels' => $labels,
@@ -61,15 +75,33 @@ class TransactionChartWidget extends ChartWidget
             'plugins' => [
                 'legend' => [
                     'display' => true,
+                    'position' => 'top',
+                    'labels' => [
+                        'padding' => 15,
+                        'usePointStyle' => true,
+                    ],
                 ],
             ],
             'scales' => [
                 'y' => [
                     'beginAtZero' => true,
+                    'grid' => [
+                        'color' => 'rgba(0, 0, 0, 0.05)',
+                    ],
                     'title' => [
                         'display' => true,
                         'text' => 'Berat (kg)',
                     ],
+                ],
+                'x' => [
+                    'grid' => [
+                        'display' => false,
+                    ],
+                ],
+            ],
+            'elements' => [
+                'line' => [
+                    'borderWidth' => 2,
                 ],
             ],
         ];

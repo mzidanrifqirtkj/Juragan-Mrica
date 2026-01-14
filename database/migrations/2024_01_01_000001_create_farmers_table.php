@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('farmer_code')->unique(); // PET001, PET002, etc
             $table->string('name');
             $table->text('address')->nullable();
-            $table->string('phone')->unique();
+            $table->string('phone')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->text('notes')->nullable();
             $table->timestamps();

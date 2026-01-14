@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Owner Warung',
             'email' => 'owner@warungsetor.test',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('12345678'),
             'role' => 'owner',
             'is_active' => true,
             'email_verified_at' => now(),
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Admin',
             'email' => 'admin@warungsetor.test',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('12345678'),
             'role' => 'admin',
             'is_active' => true,
             'email_verified_at' => now(),
@@ -37,7 +37,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Kasir 1',
             'email' => 'kasir@warungsetor.test',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('12345678'),
             'role' => 'kasir',
             'is_active' => true,
             'email_verified_at' => now(),

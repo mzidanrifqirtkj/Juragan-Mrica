@@ -13,6 +13,9 @@ class StatsOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = 2;
 
+    // Full width untuk stats cards
+    protected int|string|array $columnSpan = 'full';
+
     protected function getStats(): array
     {
         $todayTransactions = Transaction::whereDate('transaction_date', today());
@@ -23,32 +26,53 @@ class StatsOverviewWidget extends BaseWidget
         $monthSales = Sale::whereMonth('sale_date', now()->month)
             ->whereYear('sale_date', now()->year);
 
-        $totalPurchase = $monthTransactions->sum('total_amount');
-        $totalSales = $monthSales->sum('total_amount');
+        $totalPurchase = (clone $monthTransactions)->sum('total_amount');
+        $totalSales = (clone $monthSales)->sum('total_amount');
         $profit = $totalSales - $totalPurchase;
 
+        $todayTransactionsCount = (clone $todayTransactions)->count();
+        $todayWeight = (clone $todayTransactions)->sum('weight_kg');
+        $todaySalesCount = (clone $todaySales)->count();
+        $todaySalesAmount = (clone $todaySales)->sum('total_amount');
+        $activeFarmers = Farmer::where('is_active', true)->count();
+        $totalFarmers = Farmer::count();
+
         return [
-            Stat::make('Setoran Hari Ini', $todayTransactions->count())
-                ->description(number_format($todayTransactions->sum('weight_kg'), 2) . ' kg')
+            Stat::make('Setoran Hari Ini', $todayTransactionsCount . ' transaksi')
+                ->description(number_format($todayWeight, 1) . ' kg diterima hari ini')
                 ->descriptionIcon('heroicon-m-arrow-down-tray')
                 ->color('primary')
-                ->chart($this->getTransactionChartData()),
+                ->chart($this->getTransactionChartData())
+                ->extraAttributes([
+                    'class' => 'ring-1 ring-primary-500/20 dark:ring-primary-400/20',
+                ]),
 
-            Stat::make('Penjualan Hari Ini', $todaySales->count())
-                ->description('Rp ' . number_format($todaySales->sum('total_amount'), 0, ',', '.'))
+            Stat::make('Penjualan Hari Ini', $todaySalesCount . ' transaksi')
+                ->description('Rp ' . number_format($todaySalesAmount, 0, ',', '.') . ' pendapatan')
                 ->descriptionIcon('heroicon-m-arrow-up-tray')
                 ->color('success')
-                ->chart($this->getSalesChartData()),
+                ->chart($this->getSalesChartData())
+                ->extraAttributes([
+                    'class' => 'ring-1 ring-success-500/20 dark:ring-success-400/20',
+                ]),
 
-            Stat::make('Petani Aktif', Farmer::where('is_active', true)->count())
-                ->description('Total terdaftar: ' . Farmer::count())
+            Stat::make('Petani Aktif', $activeFarmers . ' petani')
+                ->description('Dari total ' . $totalFarmers . ' petani terdaftar')
                 ->descriptionIcon('heroicon-m-user-group')
-                ->color('info'),
+                ->color('info')
+                ->extraAttributes([
+                    'class' => 'ring-1 ring-info-500/20 dark:ring-info-400/20',
+                ]),
 
-            Stat::make('Laba Bulan Ini', 'Rp ' . number_format($profit, 0, ',', '.'))
-                ->description($profit >= 0 ? 'Profit' : 'Loss')
+            Stat::make('Laba Bulan Ini', 'Rp ' . number_format(abs($profit), 0, ',', '.'))
+                ->description($profit >= 0 ? 'Profit bulan ' . now()->translatedFormat('F') : 'Kerugian bulan ' . now()->translatedFormat('F'))
                 ->descriptionIcon($profit >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($profit >= 0 ? 'success' : 'danger'),
+                ->color($profit >= 0 ? 'success' : 'danger')
+                ->extraAttributes([
+                    'class' => $profit >= 0 
+                        ? 'ring-1 ring-success-500/20 dark:ring-success-400/20' 
+                        : 'ring-1 ring-danger-500/20 dark:ring-danger-400/20',
+                ]),
         ];
     }
 
@@ -72,3 +96,4 @@ class StatsOverviewWidget extends BaseWidget
         return $data;
     }
 }
+

@@ -16,6 +16,7 @@ class Sale extends Model
     protected $fillable = [
         'sale_code',
         'sale_type',
+        'transaction_id',
         'buyer_name',
         'buyer_phone',
         'weight_kg',
@@ -54,6 +55,14 @@ class Sale extends Model
             // Auto recalculate total amount on update
             $sale->total_amount = $sale->weight_kg * $sale->price_per_kg;
         });
+    }
+
+    /**
+     * Get the transaction (purchase) that this sale came from
+     */
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
     }
 
     /**

@@ -21,13 +21,13 @@ class InventoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-archive-box';
 
-    protected static ?string $navigationLabel = 'Gudang';
+    protected static ?string $navigationLabel = 'Penyimpanan';
 
-    protected static ?string $modelLabel = 'Log Gudang';
+    protected static ?string $modelLabel = 'Log Penyimpanan';
 
-    protected static ?string $pluralModelLabel = 'Log Gudang';
+    protected static ?string $pluralModelLabel = 'Log Penyimpanan';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Gudang';
+    protected static string|UnitEnum|null $navigationGroup = 'Penyimpanan';
 
     protected static ?int $navigationSort = 1;
 

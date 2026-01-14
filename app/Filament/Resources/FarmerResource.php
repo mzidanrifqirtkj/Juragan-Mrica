@@ -59,7 +59,6 @@ class FarmerResource extends Resource
                         TextInput::make('phone')
                             ->label('No. Telepon')
                             ->tel()
-                            ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(20)
                             ->placeholder('08xxxxxxxxxx'),

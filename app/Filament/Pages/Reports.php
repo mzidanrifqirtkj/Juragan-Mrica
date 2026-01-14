@@ -26,7 +26,7 @@ class Reports extends Page implements HasForms
 
     protected static ?string $title = 'Laporan & Analisis';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Gudang';
+    protected static string|UnitEnum|null $navigationGroup = 'Laporan';
 
     protected static ?int $navigationSort = 2;
 
@@ -51,13 +51,13 @@ class Reports extends Page implements HasForms
                 Section::make('Filter Periode')
                     ->schema([
                         DatePicker::make('startDate')
-                            ->label('Dari Tanggal')
+                            ->label('Dari Tanggal Petani Menjual')
                             ->required()
                             ->native(false)
                             ->displayFormat('d/m/Y')
                             ->live(),
                         DatePicker::make('endDate')
-                            ->label('Sampai Tanggal')
+                            ->label('Sampai Tanggal Setor ke Gudang')
                             ->required()
                             ->native(false)
                             ->displayFormat('d/m/Y')
@@ -88,8 +88,9 @@ class Reports extends Page implements HasForms
         $avgSalesPrice = $totalSalesWeight > 0 ? $totalSalesAmount / $totalSalesWeight : 0;
 
         // Sales by type
-        $retailSales = Sale::retail()->whereBetween('sale_date', [ $start, $end ]);
-        $bulkSales = Sale::bulk()->whereBetween('sale_date', [ $start, $end ]);
+        $warehouseSales = Sale::where('sale_type', 'warehouse')->whereBetween('sale_date', [ $start, $end ]);
+        $marketSales = Sale::where('sale_type', 'market')->whereBetween('sale_date', [ $start, $end ]);
+        $retailSales = Sale::where('sale_type', 'retail')->whereBetween('sale_date', [ $start, $end ]);
 
         // Profit
         $grossProfit = $totalSalesAmount - $totalPurchaseAmount;
@@ -121,15 +122,20 @@ class Reports extends Page implements HasForms
                 'total_amount' => $totalSalesAmount,
                 'count' => $totalSalesCount,
                 'avg_price' => $avgSalesPrice,
+                'warehouse' => [
+                    'weight' => $warehouseSales->sum('weight_kg'),
+                    'amount' => $warehouseSales->sum('total_amount'),
+                    'count' => $warehouseSales->count(),
+                ],
+                'market' => [
+                    'weight' => $marketSales->sum('weight_kg'),
+                    'amount' => $marketSales->sum('total_amount'),
+                    'count' => $marketSales->count(),
+                ],
                 'retail' => [
                     'weight' => $retailSales->sum('weight_kg'),
                     'amount' => $retailSales->sum('total_amount'),
                     'count' => $retailSales->count(),
-                ],
-                'bulk' => [
-                    'weight' => $bulkSales->sum('weight_kg'),
-                    'amount' => $bulkSales->sum('total_amount'),
-                    'count' => $bulkSales->count(),
                 ],
             ],
             'profit' => [
@@ -169,12 +175,71 @@ class Reports extends Page implements HasForms
         $start = Carbon::parse($this->startDate);
         $end = Carbon::parse($this->endDate);
 
-        $retail = Sale::retail()->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
-        $bulk = Sale::bulk()->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
+        $warehouse = Sale::where('sale_type', 'warehouse')->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
+        $market = Sale::where('sale_type', 'market')->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
+        $retail = Sale::where('sale_type', 'retail')->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
 
         return [
-            'labels' => [ 'Retail (Pasar)', 'Bulk (Pengepul)' ],
-            'data' => [ $retail, $bulk ],
+            'labels' => [ 'Gudang', 'Pasar', 'Eceran' ],
+            'data' => [ $warehouse, $market, $retail ],
+        ];
+    }
+
+    /**
+     * Get detailed sales report with profit calculation
+     */
+    public function getSalesDetailReport(): array
+    {
+        $start = Carbon::parse($this->startDate);
+        $end = Carbon::parse($this->endDate);
+
+        $sales = Sale::with('transaction.farmer')
+            ->whereBetween('sale_date', [ $start, $end ])
+            ->orderBy('sale_date', 'desc')
+            ->get()
+            ->map(function ($sale) {
+                $buyPrice = $sale->transaction ? $sale->transaction->price_per_kg : 0;
+                $sellPrice = $sale->price_per_kg;
+                $profitPerKg = $sellPrice - $buyPrice;
+                $totalProfit = $profitPerKg * $sale->weight_kg;
+
+                return [
+                    'sale_code' => $sale->sale_code,
+                    'farmer_name' => $sale->transaction?->farmer?->name ?? '-',
+                    'transaction_code' => $sale->transaction?->transaction_code ?? '-',
+                    'sale_type' => match ($sale->sale_type) {
+                        'warehouse' => 'Gudang',
+                        'market'    => 'Pasar',
+                        'retail'    => 'Eceran',
+                        default     => $sale->sale_type,
+                    },
+                    'buyer_name' => $sale->buyer_name ?? '-',
+                    'weight_kg' => $sale->weight_kg,
+                    'buy_price_per_kg' => $buyPrice,
+                    'sell_price_per_kg' => $sellPrice,
+                    'profit_per_kg' => $profitPerKg,
+                    'total_buy_amount' => $buyPrice * $sale->weight_kg,
+                    'total_sell_amount' => $sale->total_amount,
+                    'total_profit' => $totalProfit,
+                    'sale_date' => $sale->sale_date,
+                ];
+            });
+
+        // Summary
+        $totalBuyAmount = $sales->sum('total_buy_amount');
+        $totalSellAmount = $sales->sum('total_sell_amount');
+        $totalProfit = $sales->sum('total_profit');
+        $totalWeight = $sales->sum('weight_kg');
+
+        return [
+            'sales' => $sales,
+            'summary' => [
+                'total_weight' => $totalWeight,
+                'total_buy_amount' => $totalBuyAmount,
+                'total_sell_amount' => $totalSellAmount,
+                'total_profit' => $totalProfit,
+                'profit_margin' => $totalSellAmount > 0 ? ($totalProfit / $totalSellAmount) * 100 : 0,
+            ],
         ];
     }
 }

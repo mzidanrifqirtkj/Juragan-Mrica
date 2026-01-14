@@ -29,11 +29,11 @@ class SaleResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrow-up-tray';
 
-    protected static ?string $navigationLabel = 'Penjualan';
+    protected static ?string $navigationLabel = 'Pindah ke Gudang';
 
-    protected static ?string $modelLabel = 'Penjualan';
+    protected static ?string $modelLabel = 'Pindah ke Gudang';
 
-    protected static ?string $pluralModelLabel = 'Data Penjualan';
+    protected static ?string $pluralModelLabel = 'Data Pindah ke Gudang';
 
     protected static string|UnitEnum|null $navigationGroup = 'Transaksi';
 
@@ -46,22 +46,30 @@ class SaleResource extends Resource
 
         return $schema
             ->components([
-                Section::make('Data Penjualan')
+                Section::make('Data Pindah ke Gudang')
                     ->description("Stok saat ini: {$currentStock} kg")
                     ->schema([
                         Select::make('sale_type')
-                            ->label('Tipe Penjualan')
+                            ->label('Tujuan Pindah')
                             ->options([
+                                'warehouse' => 'Gudang',
+                                'market' => 'Pasar',
                                 'retail' => 'Eceran',
-                                'bulk' => 'Borongan',
                             ])
-                            ->default('retail')
+                            ->default('warehouse')
                             ->required()
                             ->live(),
 
+                        Select::make('transaction_id')
+                            ->label('Setoran Petani')
+                            ->relationship('transaction', 'transaction_code', fn(Builder $query) => $query->where('payment_status', 'paid'))
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Pilih setoran yang akan dipindahkan'),
+
                         TextInput::make('buyer_name')
-                            ->label('Nama Pembeli')
-                            ->required()
+                            ->label('Nama Pembeli / Tujuan')
                             ->maxLength(255),
 
                         TextInput::make('buyer_phone')
@@ -130,14 +138,20 @@ class SaleResource extends Resource
                     ->color('success'),
 
                 Tables\Columns\TextColumn::make('sale_type')
-                    ->label('Tipe')
+                    ->label('Tujuan')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-                        'retail' => 'primary',
-                        'bulk'   => 'warning',
-                        default  => 'gray',
+                        'warehouse' => 'success',
+                        'market'    => 'primary',
+                        'retail'    => 'warning',
+                        default     => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state) => $state === 'retail' ? 'Eceran' : 'Borongan'),
+                    ->formatStateUsing(fn(string $state) => match ($state) {
+                        'warehouse' => 'Gudang',
+                        'market'    => 'Pasar',
+                        'retail'    => 'Eceran',
+                        default     => $state,
+                    }),
 
                 Tables\Columns\TextColumn::make('buyer_name')
                     ->label('Pembeli')
@@ -173,10 +187,11 @@ class SaleResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('sale_type')
-                    ->label('Tipe')
+                    ->label('Tujuan')
                     ->options([
+                        'warehouse' => 'Gudang',
+                        'market' => 'Pasar',
                         'retail' => 'Eceran',
-                        'bulk' => 'Borongan',
                     ]),
 
                 Tables\Filters\Filter::make('sale_date')
@@ -215,11 +230,18 @@ class SaleResource extends Resource
                             ->badge()
                             ->color('success'),
                         Infolists\Components\TextEntry::make('sale_type')
-                            ->label('Tipe')
+                            ->label('Tujuan')
                             ->badge()
-                            ->formatStateUsing(fn(string $state) => $state === 'retail' ? 'Eceran' : 'Borongan'),
+                            ->formatStateUsing(fn(string $state) => match ($state) {
+                                'warehouse' => 'Gudang',
+                                'market'    => 'Pasar',
+                                'retail'    => 'Eceran',
+                                default     => $state,
+                            }),
+                        Infolists\Components\TextEntry::make('transaction.transaction_code')
+                            ->label('Setoran dari Petani'),
                         Infolists\Components\TextEntry::make('buyer_name')
-                            ->label('Nama Pembeli'),
+                            ->label('Nama Pembeli / Tujuan'),
                         Infolists\Components\TextEntry::make('buyer_phone')
                             ->label('Telepon'),
                         Infolists\Components\TextEntry::make('weight_kg')
