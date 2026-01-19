@@ -44,8 +44,8 @@ class StatsOverviewWidget extends BaseWidget
                 ->color('primary')
                 ->chart($this->getTransactionChartData())
                 ->extraAttributes([
-                    'class' => 'ring-1 ring-primary-500/20 dark:ring-primary-400/20',
-                ]),
+                        'class' => 'ring-1 ring-primary-500/20 dark:ring-primary-400/20',
+                    ]),
 
             Stat::make('Penjualan Hari Ini', $todaySalesCount . ' transaksi')
                 ->description('Rp ' . number_format($todaySalesAmount, 0, ',', '.') . ' pendapatan')
@@ -53,26 +53,26 @@ class StatsOverviewWidget extends BaseWidget
                 ->color('success')
                 ->chart($this->getSalesChartData())
                 ->extraAttributes([
-                    'class' => 'ring-1 ring-success-500/20 dark:ring-success-400/20',
-                ]),
+                        'class' => 'ring-1 ring-success-500/20 dark:ring-success-400/20',
+                    ]),
 
             Stat::make('Petani Aktif', $activeFarmers . ' petani')
                 ->description('Dari total ' . $totalFarmers . ' petani terdaftar')
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('info')
                 ->extraAttributes([
-                    'class' => 'ring-1 ring-info-500/20 dark:ring-info-400/20',
-                ]),
+                        'class' => 'ring-1 ring-info-500/20 dark:ring-info-400/20',
+                    ]),
 
             Stat::make('Laba Bulan Ini', 'Rp ' . number_format(abs($profit), 0, ',', '.'))
                 ->description($profit >= 0 ? 'Profit bulan ' . now()->translatedFormat('F') : 'Kerugian bulan ' . now()->translatedFormat('F'))
                 ->descriptionIcon($profit >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($profit >= 0 ? 'success' : 'danger')
                 ->extraAttributes([
-                    'class' => $profit >= 0 
-                        ? 'ring-1 ring-success-500/20 dark:ring-success-400/20' 
-                        : 'ring-1 ring-danger-500/20 dark:ring-danger-400/20',
-                ]),
+                        'class' => $profit >= 0
+                            ? 'ring-1 ring-success-500/20 dark:ring-success-400/20'
+                            : 'ring-1 ring-danger-500/20 dark:ring-danger-400/20',
+                    ]),
         ];
     }
 

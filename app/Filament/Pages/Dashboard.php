@@ -14,12 +14,12 @@ class Dashboard extends BaseDashboard
 {
     protected static string $routePath = '/';
 
-    public static function getNavigationIcon(): string | \BackedEnum | \Illuminate\Contracts\Support\Htmlable | null
+    public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
     {
         return Heroicon::OutlinedHome;
     }
 
-    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
     {
         return 'Dashboard';
     }
@@ -41,7 +41,7 @@ class Dashboard extends BaseDashboard
     /**
      * Configure responsive columns
      */
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return [
             'default' => 1,

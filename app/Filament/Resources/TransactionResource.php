@@ -17,6 +17,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
@@ -69,38 +70,41 @@ class TransactionResource extends Resource
 
                                 TextInput::make('weight_kg')
                                     ->label('Berat (Kg)')
-                                    ->numeric()
                                     ->required()
-                                    ->minValue(0.01)
-                                    ->step(0.01)
                                     ->suffix('kg')
+                                    ->mask(RawJs::make('$money($input, \',\', \'.\', 2)'))
+                                    ->stripCharacters('.')
+                                    ->dehydrateStateUsing(fn($state) => floatval(str_replace(',', '.', $state)))
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(
-                                        fn($state, Set $set, Get $get) =>
-                                        $set('total_amount', round(floatval($state) * floatval($get('price_per_kg')), 0))
-                                    ),
+                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                        $weight = floatval(str_replace(',', '.', str_replace('.', '', $state)));
+                                        $price = floatval(str_replace(',', '.', str_replace('.', '', $get('price_per_kg'))));
+                                        $total = round($weight * $price, 0);
+                                        $set('total_amount', number_format($total, 0, ',', '.'));
+                                    }),
 
                                 TextInput::make('price_per_kg')
                                     ->label('Harga per Kg')
-                                    ->numeric()
                                     ->required()
                                     ->prefix('Rp ')
-                                    ->formatStateUsing(fn($state) => $state ? number_format($state, 0, ',', '.') : '')
-                                    ->dehydrateStateUsing(fn($state) => str_replace([ '.', ',' ], '', $state))
+                                    ->mask(RawJs::make('$money($input, \',\', \'.\', 0)'))
+                                    ->stripCharacters('.')
+                                    ->dehydrateStateUsing(fn($state) => floatval(str_replace(',', '.', str_replace('.', '', $state))))
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(
-                                        fn($state, Set $set, Get $get) =>
-                                        $set('total_amount', round(floatval($get('weight_kg')) * floatval($state), 0))
-                                    )
-                                    ->default(fn() => Setting::get('default_price_per_kg', 50000)),
+                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                        $weight = floatval(str_replace(',', '.', str_replace('.', '', $get('weight_kg'))));
+                                        $price = floatval(str_replace(',', '.', str_replace('.', '', $state)));
+                                        $total = round($weight * $price, 0);
+                                        $set('total_amount', number_format($total, 0, ',', '.'));
+                                    }),
 
                                 TextInput::make('total_amount')
                                     ->label('Total Bayar')
-                                    ->numeric()
                                     ->required()
                                     ->prefix('Rp ')
-                                    ->formatStateUsing(fn($state) => $state ? number_format($state, 0, ',', '.') : '')
-                                    ->disabled()
+                                    ->formatStateUsing(fn($state) => $state ? number_format(floatval($state), 0, ',', '.') : '')
+                                    ->dehydrateStateUsing(fn($state) => floatval(str_replace(',', '.', str_replace('.', '', $state))))
+                                    ->readonly()
                                     ->dehydrated(true),
 
                                 Select::make('payment_status')
@@ -144,7 +148,7 @@ class TransactionResource extends Resource
 
                     Tables\Columns\TextColumn::make('weight_kg')
                         ->label('Berat')
-                        ->numeric(decimalPlaces: 2)
+                        ->numeric(decimalPlaces: 2, locale: 'id')
                         ->suffix(' kg')
                         ->sortable(),
 
@@ -275,6 +279,7 @@ class TransactionResource extends Resource
 
                                 Infolists\Components\TextEntry::make('weight_kg')
                                     ->label('Berat')
+                                    ->numeric(decimalPlaces: 2, locale: 'id')
                                     ->suffix(' kg'),
 
                                 Infolists\Components\TextEntry::make('price_per_kg')

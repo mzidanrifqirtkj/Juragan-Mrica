@@ -30,48 +30,48 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(null)
             ->favicon(null)
             ->colors([
-                'primary' => Color::Emerald,
-                'danger' => Color::Rose,
-                'warning' => Color::Amber,
-                'success' => Color::Green,
-                'info' => Color::Blue,
-            ])
+                    'primary' => Color::Emerald,
+                    'danger' => Color::Rose,
+                    'warning' => Color::Amber,
+                    'success' => Color::Green,
+                    'info' => Color::Blue,
+                ])
             ->font('Inter')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Dashboard::class,
-            ])
+                    Dashboard::class,
+                ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                \App\Filament\Widgets\StockOverviewWidget::class,
-                \App\Filament\Widgets\StatsOverviewWidget::class,
-                \App\Filament\Widgets\StockAlertWidget::class,
-                \App\Filament\Widgets\TransactionChartWidget::class,
-                \App\Filament\Widgets\RecentTransactionsWidget::class,
-            ])
+                    \App\Filament\Widgets\StockOverviewWidget::class,
+                    \App\Filament\Widgets\StatsOverviewWidget::class,
+                    \App\Filament\Widgets\StockAlertWidget::class,
+                    \App\Filament\Widgets\TransactionChartWidget::class,
+                    \App\Filament\Widgets\RecentTransactionsWidget::class,
+                ])
             ->middleware([
-                EncryptCookies::class,
-                AddQueuedCookiesToResponse::class,
-                StartSession::class,
-                AuthenticateSession::class,
-                ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
-                SubstituteBindings::class,
-                DisableBladeIconComponents::class,
-                DispatchServingFilamentEvent::class,
-            ])
+                    EncryptCookies::class,
+                    AddQueuedCookiesToResponse::class,
+                    StartSession::class,
+                    AuthenticateSession::class,
+                    ShareErrorsFromSession::class,
+                    VerifyCsrfToken::class,
+                    SubstituteBindings::class,
+                    DisableBladeIconComponents::class,
+                    DispatchServingFilamentEvent::class,
+                ])
             ->authMiddleware([
-                Authenticate::class,
-            ])
+                    Authenticate::class,
+                ])
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
-                'Transaksi',
-                'Penyimpanan',
-                'Laporan',
-                'Master Data',
-                'Pengaturan',
-            ])
+                    'Transaksi',
+                    'Penyimpanan',
+                    'Laporan',
+                    'Master Data',
+                    'Pengaturan',
+                ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s');
     }
