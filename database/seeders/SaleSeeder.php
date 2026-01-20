@@ -18,31 +18,36 @@ class SaleSeeder extends Seeder
     {
         $kasir = User::where('role', 'kasir')->first();
 
-        // Buyers data
+        // Buyers data for different sale types
+        $warehouseBuyers = [
+            [ 'name' => 'CV. Rempah Nusantara', 'phone' => '081999888777' ],
+            [ 'name' => 'PT. Bumbu Sejahtera', 'phone' => '081999888776' ],
+            [ 'name' => 'Gudang Lada Pak Haji', 'phone' => '081999888775' ],
+        ];
+
+        $marketBuyers = [
+            [ 'name' => 'Pasar Manis Stall 12', 'phone' => '082111222335' ],
+            [ 'name' => 'Pasar Induk Stand 5', 'phone' => '082111222336' ],
+            [ 'name' => 'Pasar Rempah Blok C', 'phone' => '082111222337' ],
+        ];
+
         $retailBuyers = [
             [ 'name' => 'Toko Bumbu Ibu Ani', 'phone' => '082111222333' ],
             [ 'name' => 'Warung Bu Sari', 'phone' => '082111222334' ],
-            [ 'name' => 'Pasar Manis Stall 12', 'phone' => '082111222335' ],
-            [ 'name' => 'Toko Rempah Pak Darmo', 'phone' => '082111222336' ],
-        ];
-
-        $bulkBuyers = [
-            [ 'name' => 'CV. Rempah Nusantara', 'phone' => '081999888777' ],
-            [ 'name' => 'PT. Bumbu Sejahtera', 'phone' => '081999888776' ],
-            [ 'name' => 'Pengepul Pak Haji Rahman', 'phone' => '081999888775' ],
+            [ 'name' => 'Toko Rempah Pak Darmo', 'phone' => '082111222338' ],
         ];
 
         $sales = [];
 
-        // Generate 10 retail sales
-        for ($i = 0; $i < 10; $i++) {
-            $buyer = $retailBuyers[ array_rand($retailBuyers) ];
-            $date = Carbon::now()->subDays(rand(0, 25));
-            $weight = rand(2, 20) + (rand(0, 99) / 100); // 2.00 - 20.99 kg
-            $pricePerKg = rand(115000, 130000); // Harga jual retail
+        // Generate 2 warehouse sales (large quantities - but limited by stock)
+        for ($i = 0; $i < 2; $i++) {
+            $buyer = $warehouseBuyers[ array_rand($warehouseBuyers) ];
+            $date = Carbon::now()->subDays(rand(5, 20));
+            $weight = rand(50, 100) + (rand(0, 99) / 100); // 50.00 - 100.99 kg
+            $pricePerKg = rand(100000, 110000); // Harga jual ke gudang
 
             $sales[] = [
-                'type' => 'retail',
+                'type' => 'warehouse',
                 'buyer' => $buyer,
                 'date' => $date,
                 'weight' => round($weight, 2),
@@ -50,15 +55,31 @@ class SaleSeeder extends Seeder
             ];
         }
 
-        // Generate 3 bulk sales
+        // Generate 3 market sales (medium quantities)
         for ($i = 0; $i < 3; $i++) {
-            $buyer = $bulkBuyers[ array_rand($bulkBuyers) ];
-            $date = Carbon::now()->subDays(rand(5, 20));
-            $weight = rand(100, 300) + (rand(0, 99) / 100); // 100.00 - 300.99 kg
-            $pricePerKg = rand(110000, 120000); // Harga jual bulk (lebih murah)
+            $buyer = $marketBuyers[ array_rand($marketBuyers) ];
+            $date = Carbon::now()->subDays(rand(0, 25));
+            $weight = rand(10, 30) + (rand(0, 99) / 100); // 10.00 - 30.99 kg
+            $pricePerKg = rand(115000, 125000); // Harga jual ke pasar
 
             $sales[] = [
-                'type' => 'bulk',
+                'type' => 'market',
+                'buyer' => $buyer,
+                'date' => $date,
+                'weight' => round($weight, 2),
+                'price' => $pricePerKg,
+            ];
+        }
+
+        // Generate 5 retail sales (small quantities)
+        for ($i = 0; $i < 5; $i++) {
+            $buyer = $retailBuyers[ array_rand($retailBuyers) ];
+            $date = Carbon::now()->subDays(rand(0, 25));
+            $weight = rand(1, 5) + (rand(0, 99) / 100); // 1.00 - 5.99 kg
+            $pricePerKg = rand(125000, 140000); // Harga jual eceran (tertinggi)
+
+            $sales[] = [
+                'type' => 'retail',
                 'buyer' => $buyer,
                 'date' => $date,
                 'weight' => round($weight, 2),
@@ -71,13 +92,13 @@ class SaleSeeder extends Seeder
             return $a[ 'date' ]->timestamp - $b[ 'date' ]->timestamp;
         });
 
-        // Create sales
+        // Create sales - only if we have enough stock
         foreach ($sales as $data) {
             $currentStock = InventoryService::getCurrentStock();
 
             // Only create sale if we have enough stock
             if ($currentStock >= $data[ 'weight' ]) {
-                Sale::create([
+                $sale = Sale::create([
                     'sale_type' => $data[ 'type' ],
                     'buyer_name' => $data[ 'buyer' ][ 'name' ],
                     'buyer_phone' => $data[ 'buyer' ][ 'phone' ],
@@ -85,10 +106,19 @@ class SaleSeeder extends Seeder
                     'price_per_kg' => $data[ 'price' ],
                     'total_amount' => $data[ 'weight' ] * $data[ 'price' ],
                     'sale_date' => $data[ 'date' ],
-                    'notes' => $data[ 'type' ] === 'bulk' ? 'Penjualan partai besar' : null,
+                    'notes' => $data[ 'type' ] === 'warehouse' ? 'Penjualan ke gudang besar' : null,
                     'created_by' => $kasir->id,
                 ]);
+
+                // Reduce stock via InventoryService
+                try {
+                    InventoryService::reduceStock($sale);
+                } catch (\Exception $e) {
+                    // Skip if stock is insufficient - just log the sale without reducing
+                }
             }
         }
     }
 }
+
+

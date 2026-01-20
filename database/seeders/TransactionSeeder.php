@@ -52,10 +52,14 @@ class TransactionSeeder extends Seeder
                 'total_amount' => $data[ 'weight' ] * $data[ 'price' ],
                 'payment_method' => $data[ 'payment_method' ],
                 'payment_status' => rand(0, 4) > 0 ? 'paid' : 'pending', // 80% paid
+                'is_sold' => false, // All new transactions start as unsold
                 'transaction_date' => $data[ 'date' ],
                 'notes' => rand(0, 1) ? 'Lada kering kualitas ' . [ 'A', 'B', 'C' ][ rand(0, 2) ] : null,
                 'created_by' => $kasir->id,
             ]);
+
+            // Add stock to inventory
+            InventoryService::addStock($transaction);
         }
     }
 }

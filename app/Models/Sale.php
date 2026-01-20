@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Services\CodeGeneratorService;
 use App\Services\InventoryService;
@@ -58,7 +59,17 @@ class Sale extends Model
     }
 
     /**
-     * Get the transaction (purchase) that this sale came from
+     * Get the transactions (purchases) that this sale came from (via pivot)
+     */
+    public function transactions(): BelongsToMany
+    {
+        return $this->belongsToMany(Transaction::class, 'sale_transactions')
+            ->withPivot('weight_kg')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the single transaction (for backward compatibility)
      */
     public function transaction(): BelongsTo
     {

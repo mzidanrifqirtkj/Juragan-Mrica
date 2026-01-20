@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Services\CodeGeneratorService;
@@ -22,6 +23,7 @@ class Transaction extends Model
         'payment_proof',
         'payment_method',
         'payment_status',
+        'is_sold',
         'transaction_date',
         'notes',
         'created_by',
@@ -32,6 +34,7 @@ class Transaction extends Model
         'price_per_kg' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'transaction_date' => 'datetime',
+        'is_sold' => 'boolean',
     ];
 
     /**
@@ -83,11 +86,13 @@ class Transaction extends Model
     }
 
     /**
-     * Get the sales that came from this transaction
+     * Get the sales that came from this transaction (via pivot)
      */
-    public function sales(): HasMany
+    public function sales(): BelongsToMany
     {
-        return $this->hasMany(Sale::class);
+        return $this->belongsToMany(Sale::class, 'sale_transactions')
+            ->withPivot('weight_kg')
+            ->withTimestamps();
     }
 
     /**
@@ -121,5 +126,21 @@ class Transaction extends Model
     public function scopeDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('transaction_date', [ $startDate, $endDate ]);
+    }
+
+    /**
+     * Scope for unsold transactions (available for sale)
+     */
+    public function scopeUnsold($query)
+    {
+        return $query->where('is_sold', false);
+    }
+
+    /**
+     * Scope for sold transactions
+     */
+    public function scopeSold($query)
+    {
+        return $query->where('is_sold', true);
     }
 }

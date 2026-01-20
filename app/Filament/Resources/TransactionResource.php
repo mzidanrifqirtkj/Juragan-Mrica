@@ -113,7 +113,7 @@ class TransactionResource extends Resource
                                             'pending' => 'Belum Bayar',
                                             'paid' => 'Sudah Bayar',
                                         ])
-                                    ->default('pending')
+                                    ->default('paid')
                                     ->required(),
 
                                 DateTimePicker::make('transaction_date')
