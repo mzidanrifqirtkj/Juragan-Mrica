@@ -6,91 +6,205 @@ use App\Models\Transaction;
 use App\Models\Sale;
 use App\Models\Farmer;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
 use UnitEnum;
 
+/**
+ * Halaman Laporan & Analisis
+ * Menggunakan pendekatan Filament v4 modern
+ */
 class Reports extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
-
+    // =========================================================================
+    // KONFIGURASI
+    // =========================================================================
+    
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';
     protected static ?string $navigationLabel = 'Laporan';
-
     protected static ?string $title = 'Laporan & Analisis';
-
     protected static string|UnitEnum|null $navigationGroup = 'Laporan';
-
-    protected static ?int $navigationSort = 2;
-
+    protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.reports';
 
-    #[Url ]
+    // =========================================================================
+    // STATE
+    // =========================================================================
+    
+    #[Url]
     public ?string $startDate = null;
 
-    #[Url ]
+    #[Url]
     public ?string $endDate = null;
 
+    public ?string $quickPeriod = null;
+
+    // =========================================================================
+    // LIFECYCLE
+    // =========================================================================
+    
     public function mount(): void
     {
         $this->startDate = $this->startDate ?? now()->startOfMonth()->format('Y-m-d');
         $this->endDate = $this->endDate ?? now()->format('Y-m-d');
     }
 
-    public function form(Schema $schema): Schema
+    // =========================================================================
+    // HEADING
+    // =========================================================================
+    
+    public function getSubheading(): ?string
     {
-        return $schema
-            ->components([
-                Section::make('Filter Periode')
-                    ->schema([
-                        DatePicker::make('startDate')
-                            ->label('Dari Tanggal Petani Menjual')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->live(),
-                        DatePicker::make('endDate')
-                            ->label('Sampai Tanggal Setor ke Gudang')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->live(),
-                    ])
-                    ->columns(2)
-                    ->compact(),
-            ]);
+        $data = $this->getReportData();
+        return "Periode: {$data['period']['start']} - {$data['period']['end']}";
     }
 
+    // =========================================================================
+    // HEADER ACTIONS
+    // =========================================================================
+    
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('refresh')
+                ->label('Refresh')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->action(fn () => $this->dispatch('$refresh')),
+        ];
+    }
+
+    // =========================================================================
+    // WIDGETS
+    // =========================================================================
+    
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Pages\Reports\Widgets\ReportStatsWidget::class,
+        ];
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Pages\Reports\Widgets\DailyTrendChartWidget::class,
+            \App\Filament\Pages\Reports\Widgets\SalesTypeChartWidget::class,
+        ];
+    }
+
+    public function getFooterWidgetsColumns(): int|array
+    {
+        return [
+            'default' => 1,
+            'md' => 3,
+        ];
+    }
+
+    // =========================================================================
+    // FORM (FILTER)
+    // =========================================================================
+    
+    public function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            Grid::make(4)->schema([
+                DatePicker::make('startDate')
+                    ->label('Dari Tanggal')
+                    ->required()
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->live()
+                    ->afterStateUpdated(fn () => $this->dispatch('$refresh')),
+                    
+                DatePicker::make('endDate')
+                    ->label('Sampai Tanggal')
+                    ->required()
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->live()
+                    ->afterStateUpdated(fn () => $this->dispatch('$refresh')),
+                    
+                Select::make('quickPeriod')
+                    ->label('Periode Cepat')
+                    ->options([
+                        'today' => 'Hari Ini',
+                        'yesterday' => 'Kemarin',
+                        'this_week' => 'Minggu Ini',
+                        'this_month' => 'Bulan Ini',
+                        'last_month' => 'Bulan Lalu',
+                    ])
+                    ->placeholder('Pilih...')
+                    ->live()
+                    ->afterStateUpdated(function ($state) {
+                        $this->applyQuickPeriod($state);
+                        $this->dispatch('$refresh');
+                    }),
+            ]),
+        ]);
+    }
+
+    // =========================================================================
+    // HELPER METHODS
+    // =========================================================================
+    
+    protected function applyQuickPeriod(?string $period): void
+    {
+        if (!$period) return;
+
+        [$start, $end] = match($period) {
+            'today' => [now()->startOfDay(), now()],
+            'yesterday' => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
+            'this_week' => [now()->startOfWeek(), now()],
+            'this_month' => [now()->startOfMonth(), now()],
+            'last_month' => [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()],
+            default => [now()->startOfMonth(), now()],
+        };
+
+        $this->startDate = $start->format('Y-m-d');
+        $this->endDate = $end->format('Y-m-d');
+    }
+
+    // =========================================================================
+    // DATA METHODS
+    // =========================================================================
+    
     public function getReportData(): array
     {
         $start = Carbon::parse($this->startDate);
         $end = Carbon::parse($this->endDate);
 
-        // Transactions (Purchases)
-        $transactions = Transaction::whereBetween('transaction_date', [ $start, $end ]);
-        $totalPurchaseWeight = $transactions->sum('weight_kg');
-        $totalPurchaseAmount = $transactions->sum('total_amount');
-        $totalTransactions = $transactions->count();
+        // Purchases
+        $purchases = Transaction::whereBetween('transaction_date', [$start, $end]);
+        $totalPurchaseWeight = (clone $purchases)->sum('weight_kg');
+        $totalPurchaseAmount = (clone $purchases)->sum('total_amount');
+        $totalTransactions = (clone $purchases)->count();
         $avgPurchasePrice = $totalPurchaseWeight > 0 ? $totalPurchaseAmount / $totalPurchaseWeight : 0;
 
         // Sales
-        $sales = Sale::whereBetween('sale_date', [ $start, $end ]);
-        $totalSalesWeight = $sales->sum('weight_kg');
-        $totalSalesAmount = $sales->sum('total_amount');
-        $totalSalesCount = $sales->count();
+        $sales = Sale::whereBetween('sale_date', [$start, $end]);
+        $totalSalesWeight = (clone $sales)->sum('weight_kg');
+        $totalSalesAmount = (clone $sales)->sum('total_amount');
+        $totalSalesCount = (clone $sales)->count();
         $avgSalesPrice = $totalSalesWeight > 0 ? $totalSalesAmount / $totalSalesWeight : 0;
 
         // Sales by type
-        $warehouseSales = Sale::where('sale_type', 'warehouse')->whereBetween('sale_date', [ $start, $end ]);
-        $marketSales = Sale::where('sale_type', 'market')->whereBetween('sale_date', [ $start, $end ]);
-        $retailSales = Sale::where('sale_type', 'retail')->whereBetween('sale_date', [ $start, $end ]);
+        $warehouseSales = Sale::where('sale_type', 'warehouse')->whereBetween('sale_date', [$start, $end]);
+        $marketSales = Sale::where('sale_type', 'market')->whereBetween('sale_date', [$start, $end]);
+        $retailSales = Sale::where('sale_type', 'retail')->whereBetween('sale_date', [$start, $end]);
 
         // Profit
         $grossProfit = $totalSalesAmount - $totalPurchaseAmount;
@@ -98,9 +212,7 @@ class Reports extends Page implements HasForms
 
         // Top Farmers
         $topFarmers = Farmer::withSum([
-            'transactions' => function ($query) use ($start, $end) {
-                $query->whereBetween('transaction_date', [ $start, $end ]);
-            }
+            'transactions' => fn ($query) => $query->whereBetween('transaction_date', [$start, $end])
         ], 'weight_kg')
             ->orderByDesc('transactions_sum_weight_kg')
             ->limit(5)
@@ -123,19 +235,19 @@ class Reports extends Page implements HasForms
                 'count' => $totalSalesCount,
                 'avg_price' => $avgSalesPrice,
                 'warehouse' => [
-                    'weight' => $warehouseSales->sum('weight_kg'),
-                    'amount' => $warehouseSales->sum('total_amount'),
-                    'count' => $warehouseSales->count(),
+                    'weight' => (clone $warehouseSales)->sum('weight_kg'),
+                    'amount' => (clone $warehouseSales)->sum('total_amount'),
+                    'count' => (clone $warehouseSales)->count(),
                 ],
                 'market' => [
-                    'weight' => $marketSales->sum('weight_kg'),
-                    'amount' => $marketSales->sum('total_amount'),
-                    'count' => $marketSales->count(),
+                    'weight' => (clone $marketSales)->sum('weight_kg'),
+                    'amount' => (clone $marketSales)->sum('total_amount'),
+                    'count' => (clone $marketSales)->count(),
                 ],
                 'retail' => [
-                    'weight' => $retailSales->sum('weight_kg'),
-                    'amount' => $retailSales->sum('total_amount'),
-                    'count' => $retailSales->count(),
+                    'weight' => (clone $retailSales)->sum('weight_kg'),
+                    'amount' => (clone $retailSales)->sum('total_amount'),
+                    'count' => (clone $retailSales)->count(),
                 ],
             ],
             'profit' => [
@@ -146,59 +258,17 @@ class Reports extends Page implements HasForms
         ];
     }
 
-    public function getDailyChartData(): array
-    {
-        $start = Carbon::parse($this->startDate);
-        $end = Carbon::parse($this->endDate);
-
-        $labels = [];
-        $purchaseData = [];
-        $salesData = [];
-
-        $current = $start->copy();
-        while ($current <= $end) {
-            $labels[] = $current->format('d M');
-            $purchaseData[] = Transaction::whereDate('transaction_date', $current)->sum('total_amount');
-            $salesData[] = Sale::whereDate('sale_date', $current)->sum('total_amount');
-            $current->addDay();
-        }
-
-        return [
-            'labels' => $labels,
-            'purchases' => $purchaseData,
-            'sales' => $salesData,
-        ];
-    }
-
-    public function getSalesTypeChartData(): array
-    {
-        $start = Carbon::parse($this->startDate);
-        $end = Carbon::parse($this->endDate);
-
-        $warehouse = Sale::where('sale_type', 'warehouse')->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
-        $market = Sale::where('sale_type', 'market')->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
-        $retail = Sale::where('sale_type', 'retail')->whereBetween('sale_date', [ $start, $end ])->sum('total_amount');
-
-        return [
-            'labels' => [ 'Gudang', 'Pasar', 'Eceran' ],
-            'data' => [ $warehouse, $market, $retail ],
-        ];
-    }
-
-    /**
-     * Get detailed sales report with profit calculation
-     */
     public function getSalesDetailReport(): array
     {
         $start = Carbon::parse($this->startDate);
         $end = Carbon::parse($this->endDate);
 
         $sales = Sale::with('transaction.farmer')
-            ->whereBetween('sale_date', [ $start, $end ])
+            ->whereBetween('sale_date', [$start, $end])
             ->orderBy('sale_date', 'desc')
             ->get()
             ->map(function ($sale) {
-                $buyPrice = $sale->transaction ? $sale->transaction->price_per_kg : 0;
+                $buyPrice = $sale->transaction?->price_per_kg ?? 0;
                 $sellPrice = $sale->price_per_kg;
                 $profitPerKg = $sellPrice - $buyPrice;
                 $totalProfit = $profitPerKg * $sale->weight_kg;
@@ -206,14 +276,12 @@ class Reports extends Page implements HasForms
                 return [
                     'sale_code' => $sale->sale_code,
                     'farmer_name' => $sale->transaction?->farmer?->name ?? '-',
-                    'transaction_code' => $sale->transaction?->transaction_code ?? '-',
                     'sale_type' => match ($sale->sale_type) {
                         'warehouse' => 'Gudang',
-                        'market'    => 'Pasar',
-                        'retail'    => 'Eceran',
-                        default     => $sale->sale_type,
+                        'market' => 'Pasar',
+                        'retail' => 'Eceran',
+                        default => $sale->sale_type,
                     },
-                    'buyer_name' => $sale->buyer_name ?? '-',
                     'weight_kg' => $sale->weight_kg,
                     'buy_price_per_kg' => $buyPrice,
                     'sell_price_per_kg' => $sellPrice,
@@ -225,20 +293,16 @@ class Reports extends Page implements HasForms
                 ];
             });
 
-        // Summary
-        $totalBuyAmount = $sales->sum('total_buy_amount');
-        $totalSellAmount = $sales->sum('total_sell_amount');
-        $totalProfit = $sales->sum('total_profit');
-        $totalWeight = $sales->sum('weight_kg');
-
         return [
             'sales' => $sales,
             'summary' => [
-                'total_weight' => $totalWeight,
-                'total_buy_amount' => $totalBuyAmount,
-                'total_sell_amount' => $totalSellAmount,
-                'total_profit' => $totalProfit,
-                'profit_margin' => $totalSellAmount > 0 ? ($totalProfit / $totalSellAmount) * 100 : 0,
+                'total_weight' => $sales->sum('weight_kg'),
+                'total_buy_amount' => $sales->sum('total_buy_amount'),
+                'total_sell_amount' => $sales->sum('total_sell_amount'),
+                'total_profit' => $sales->sum('total_profit'),
+                'profit_margin' => $sales->sum('total_sell_amount') > 0 
+                    ? ($sales->sum('total_profit') / $sales->sum('total_sell_amount')) * 100 
+                    : 0,
             ],
         ];
     }

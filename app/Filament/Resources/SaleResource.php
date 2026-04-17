@@ -13,7 +13,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Utilities\Get;
@@ -49,7 +48,7 @@ class SaleResource extends Resource
         return $schema
             ->components([
                     Section::make('Data Pindah ke Gudang')
-                        ->description("Stok tersedia: " . number_format($currentStock, 2, ',', '.') . " kg")
+                        ->description("Stok saat ini: {$currentStock} kg")
                         ->schema([
                                 Select::make('sale_type')
                                     ->label('Tujuan Pindah')
@@ -62,18 +61,13 @@ class SaleResource extends Resource
                                     ->required()
                                     ->live(),
 
-                                Toggle::make('sell_all_stock')
-                                    ->label('Jual Semua Stok (' . number_format($currentStock, 2, ',', '.') . ' kg)')
-                                    ->default(true)
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set) use ($currentStock) {
-                                        if ($state) {
-                                            $set('weight_kg', number_format($currentStock, 2, ',', '.'));
-                                        } else {
-                                            $set('weight_kg', '');
-                                        }
-                                    })
-                                    ->columnSpanFull(),
+                                Select::make('transaction_id')
+                                    ->label('Setoran Petani')
+                                    ->relationship('transaction', 'transaction_code', fn(Builder $query) => $query->where('payment_status', 'paid'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->nullable()
+                                    ->helperText('Pilih setoran yang akan dipindahkan'),
 
                                 TextInput::make('buyer_name')
                                     ->label('Nama Pembeli / Tujuan')
@@ -92,9 +86,6 @@ class SaleResource extends Resource
                                     ->mask(RawJs::make('$money($input, \',\', \'.\', 2)'))
                                     ->stripCharacters('.')
                                     ->dehydrateStateUsing(fn($state) => floatval(str_replace(',', '.', $state)))
-                                    ->disabled(fn(Get $get) => $get('sell_all_stock'))
-                                    ->dehydrated(true)
-                                    ->default(fn() => number_format($currentStock, 2, ',', '.'))
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                         $weight = floatval(str_replace(',', '.', str_replace('.', '', $state)));
@@ -102,7 +93,7 @@ class SaleResource extends Resource
                                         $total = round($weight * $price, 0);
                                         $set('total_amount', number_format($total, 0, ',', '.'));
                                     })
-                                    ->helperText("Maksimal: " . number_format($currentStock, 2, ',', '.') . " kg"),
+                                    ->helperText("Maksimal: {$currentStock} kg"),
 
                                 TextInput::make('price_per_kg')
                                     ->label('Harga per Kg')
@@ -117,8 +108,17 @@ class SaleResource extends Resource
                                         $price = floatval(str_replace(',', '.', str_replace('.', '', $state)));
                                         $total = round($weight * $price, 0);
                                         $set('total_amount', number_format($total, 0, ',', '.'));
-                                    }),
+                                    })
+                                    ->default(70000),
 
+                                // TextInput::make('total_amount')
+                                //     ->label('Total Bayar')
+                                //     ->required()
+                                //     ->prefix('Rp')
+                                //     ->formatStateUsing(fn($state) => $state ? number_format(floatval($state), 0, ',', '.') : '')
+                                //     ->dehydrateStateUsing(fn($state) => floatval(str_replace(',', '.', str_replace('.', '', $state))))
+                                //     ->readonly()
+                                //     ->dehydrated(true),
 
                                 TextInput::make('total_amount')
                                     ->label('Total Bayar')
@@ -128,11 +128,6 @@ class SaleResource extends Resource
                                     ->dehydrateStateUsing(fn($state) => floatval(str_replace(',', '.', str_replace('.', '', $state))))
                                     ->readonly()
                                     ->dehydrated(true),
-
-                                DateTimePicker::make('sale_date')
-                                    ->label('Tanggal Penjualan')
-                                    ->default(now())
-                                    ->required(),
 
                                 Textarea::make('notes')
                                     ->label('Catatan')
@@ -147,12 +142,12 @@ class SaleResource extends Resource
     {
         return $table
             ->columns([
-                    // Tables\Columns\TextColumn::make('sale_code')
-                    //     ->label('Kode')
-                    //     ->searchable()
-                    //     ->sortable()
-                    //     ->badge()
-                    //     ->color('success'),
+                    Tables\Columns\TextColumn::make('sale_code')
+                        ->label('Kode')
+                        ->searchable()
+                        ->sortable()
+                        ->badge()
+                        ->color('success'),
 
                     Tables\Columns\TextColumn::make('sale_type')
                         ->label('Tujuan')
@@ -177,7 +172,7 @@ class SaleResource extends Resource
 
                     Tables\Columns\TextColumn::make('weight_kg')
                         ->label('Berat')
-                        ->numeric(decimalPlaces: 2, locale: 'id')
+                        ->numeric(decimalPlaces: 2)
                         ->suffix(' kg')
                         ->sortable(),
 
@@ -211,48 +206,7 @@ class SaleResource extends Resource
                                 'retail' => 'Eceran',
                             ]),
 
-                    Tables\Filters\SelectFilter::make('month')
-                        ->label('Bulan')
-                        ->options([
-                                '1' => 'Januari',
-                                '2' => 'Februari',
-                                '3' => 'Maret',
-                                '4' => 'April',
-                                '5' => 'Mei',
-                                '6' => 'Juni',
-                                '7' => 'Juli',
-                                '8' => 'Agustus',
-                                '9' => 'September',
-                                '10' => 'Oktober',
-                                '11' => 'November',
-                                '12' => 'Desember',
-                            ])
-                        ->query(function (Builder $query, array $data): Builder {
-                            return $query->when(
-                                $data['value'],
-                                fn(Builder $q, $month) => $q->whereMonth('sale_date', $month)
-                            );
-                        }),
-
-                    Tables\Filters\SelectFilter::make('year')
-                        ->label('Tahun')
-                        ->options(function () {
-                            $currentYear = now()->year;
-                            $years = [];
-                            for ($year = $currentYear - 4; $year <= $currentYear; $year++) {
-                                $years[$year] = (string) $year;
-                            }
-                            return $years;
-                        })
-                        ->query(function (Builder $query, array $data): Builder {
-                            return $query->when(
-                                $data['value'],
-                                fn(Builder $q, $year) => $q->whereYear('sale_date', $year)
-                            );
-                        }),
-
                     Tables\Filters\Filter::make('sale_date')
-                        ->label('Rentang Tanggal')
                         ->form([
                                 DatePicker::make('from')
                                     ->label('Dari Tanggal'),
@@ -261,8 +215,8 @@ class SaleResource extends Resource
                             ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
-                                ->when($data['from'], fn(Builder $q, $date) => $q->whereDate('sale_date', '>=', $date))
-                                ->when($data['until'], fn(Builder $q, $date) => $q->whereDate('sale_date', '<=', $date));
+                                ->when($data[ 'from' ], fn(Builder $q, $date) => $q->whereDate('sale_date', '>=', $date))
+                                ->when($data[ 'until' ], fn(Builder $q, $date) => $q->whereDate('sale_date', '<=', $date));
                         }),
                 ])
             ->actions([
@@ -304,7 +258,6 @@ class SaleResource extends Resource
                                     ->label('Telepon'),
                                 Infolists\Components\TextEntry::make('weight_kg')
                                     ->label('Berat')
-                                    ->numeric(decimalPlaces: 2, locale: 'id')
                                     ->suffix(' kg'),
                                 Infolists\Components\TextEntry::make('price_per_kg')
                                     ->label('Harga per Kg')

@@ -1,559 +1,266 @@
 <x-filament-panels::page>
     @php
         $data = $this->getReportData();
-        $chartData = $this->getDailyChartData();
-        $salesTypeData = $this->getSalesTypeChartData();
-        $salesDetailReport = $this->getSalesDetailReport();
+        $salesDetail = $this->getSalesDetailReport();
     @endphp
 
-    <style>
-        .stat-card {
-            @apply relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm transition-all hover:shadow-md;
-        }
-
-        .stat-card::before {
-            @apply absolute inset-0 h-1 w-full;
-            content: '';
-        }
-
-        .stat-card.primary::before {
-            @apply bg-gradient-to-r from-blue-400 to-blue-600;
-        }
-
-        .stat-card.success::before {
-            @apply bg-gradient-to-r from-green-400 to-green-600;
-        }
-
-        .stat-card.danger::before {
-            @apply bg-gradient-to-r from-red-400 to-red-600;
-        }
-
-        .stat-card.warning::before {
-            @apply bg-gradient-to-r from-amber-400 to-amber-600;
-        }
-
-        .stat-icon {
-            @apply flex h-12 w-12 items-center justify-center rounded-lg text-lg;
-        }
-
-        .table-header {
-            @apply sticky top-0 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-semibold text-gray-700 dark:text-gray-300;
-        }
-
-        .table-row-hover {
-            @apply hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors;
-        }
-
-        .badge {
-            @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all;
-        }
-
-        .chart-container {
-            @apply rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm;
-        }
-    </style>
-
-    <!-- Header Section -->
-    <div class="mb-8">
-        <div class="flex flex-col gap-2">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Laporan & Analisis</h1>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ $data['period']['start'] }} → {{ $data['period']['end'] }}
-            </p>
-        </div>
-    </div>
-
-    <!-- Date Filter Form -->
-    <x-filament::section class="mb-6">
-        <div class="space-y-4">
-            {{ $this->form }}
-        </div>
+    {{-- Filter Form --}}
+    <x-filament::section class="mb-6" compact>
+        <x-slot name="heading">
+            Filter Periode
+        </x-slot>
+        {{ $this->form }}
     </x-filament::section>
 
-    <!-- Summary Stats - Improved Design -->
-    <div class="mb-8">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Ringkasan Kinerja</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Pembelian -->
-            <div class="stat-card primary">
-                <div class="relative z-10">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pembelian dari Petani</p>
-                            <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-                                Rp {{ number_format($data['purchases']['total_amount'], 0, ',', '.') }}
-                            </p>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                {{ number_format($data['purchases']['total_weight'], 2) }} kg
-                                <span class="mx-1">•</span>
-                                {{ $data['purchases']['count'] }} transaksi
-                            </p>
-                        </div>
-                        <div class="stat-icon bg-blue-100 dark:bg-blue-900/20">📥</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Penjualan -->
-            <div class="stat-card success">
-                <div class="relative z-10">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Penjualan</p>
-                            <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-                                Rp {{ number_format($data['sales']['total_amount'], 0, ',', '.') }}
-                            </p>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                {{ number_format($data['sales']['total_weight'], 2) }} kg
-                                <span class="mx-1">•</span>
-                                {{ $data['sales']['count'] }} transaksi
-                            </p>
-                        </div>
-                        <div class="stat-icon bg-green-100 dark:bg-green-900/20">📤</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Laba -->
-            <div class="stat-card {{ $data['profit']['gross'] >= 0 ? 'success' : 'danger' }}">
-                <div class="relative z-10">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Laba Kotor</p>
-                            <p
-                                class="mt-2 text-2xl font-bold {{ $data['profit']['gross'] >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                Rp {{ number_format($data['profit']['gross'], 0, ',', '.') }}
-                            </p>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                Margin: <span
-                                    class="font-semibold">{{ number_format($data['profit']['margin'], 1) }}%</span>
-                            </p>
-                        </div>
-                        <div
-                            class="stat-icon {{ $data['profit']['gross'] >= 0 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20' }}">
-                            💰</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Comparison -->
-            <div class="stat-card warning">
-                <div class="relative z-10">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Selisih Harga</p>
-                            <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-                                Rp
-                                {{ number_format($data['sales']['avg_price'] - $data['purchases']['avg_price'], 0, ',', '.') }}/kg
-                            </p>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                Beli: Rp {{ number_format($data['purchases']['avg_price'], 0, ',', '.') }}
-                                <br>
-                                Jual: Rp {{ number_format($data['sales']['avg_price'], 0, ',', '.') }}
-                            </p>
-                        </div>
-                        <div class="stat-icon bg-amber-100 dark:bg-amber-900/20">📊</div>
-                    </div>
-                </div>
-            </div>
+    {{-- Stats Widgets --}}
+    @if (count($this->getHeaderWidgets()) > 0)
+        <div class="mb-6">
+            <x-filament-widgets::widgets :widgets="$this->getVisibleHeaderWidgets()" :columns="$this->getHeaderWidgetsColumns()" :data="['startDate' => $this->startDate, 'endDate' => $this->endDate]" />
         </div>
-    </div>
+    @endif
 
-    <!-- Charts Section -->
-    <div class="mb-8">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Visualisasi Data</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Daily Trend Chart -->
-            <div class="lg:col-span-2">
-                <div class="chart-container">
-                    <div class="mb-4 flex items-center gap-2">
-                        <span class="text-xl">📈</span>
-                        <h3 class="font-semibold text-gray-900 dark:text-white">Trend Pembelian vs Penjualan</h3>
-                    </div>
-                    <div style="height: 350px;">
-                        <canvas id="dailyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sales Type Pie Chart -->
+    {{-- Profit Summary Card --}}
+    <div
+        class="mb-6 rounded-xl p-6 {{ $data['profit']['gross'] >= 0 ? 'bg-success-50 dark:bg-success-950 border border-success-200 dark:border-success-800' : 'bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800' }}">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <div class="chart-container">
-                    <div class="mb-4 flex items-center gap-2">
-                        <span class="text-xl">🎯</span>
-                        <h3 class="font-semibold text-gray-900 dark:text-white">Komposisi Penjualan</h3>
-                    </div>
-                    <div style="height: 350px;">
-                        <canvas id="salesTypeChart"></canvas>
-                    </div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Laba Kotor Periode Ini</p>
+                <p
+                    class="text-3xl font-bold {{ $data['profit']['gross'] >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400' }}">
+                    Rp {{ number_format(abs($data['profit']['gross']), 0, ',', '.') }}
+                </p>
+            </div>
+            <div class="flex gap-4">
+                <div class="text-center px-4 py-2 rounded-lg bg-white/50 dark:bg-gray-800/50">
+                    <p class="text-xs text-gray-500">Margin</p>
+                    <p
+                        class="text-xl font-bold {{ $data['profit']['margin'] >= 0 ? 'text-success-600' : 'text-danger-600' }}">
+                        {{ number_format($data['profit']['margin'], 1) }}%</p>
+                </div>
+                <div class="text-center px-4 py-2 rounded-lg bg-white/50 dark:bg-gray-800/50">
+                    <p class="text-xs text-gray-500">Selisih/kg</p>
+                    <p class="text-xl font-bold text-warning-600">Rp
+                        {{ number_format($data['sales']['avg_price'] - $data['purchases']['avg_price'], 0, ',', '.') }}
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Sales Breakdown -->
-    <div class="mb-8">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Breakdown Penjualan</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Warehouse -->
-            <div
-                class="rounded-lg border border-green-200 dark:border-green-900/30 bg-green-50 dark:bg-green-900/10 p-4">
-                <div class="mb-4 flex items-center gap-2">
-                    <span class="text-2xl">🏭</span>
-                    <h3 class="font-semibold text-green-900 dark:text-green-400">Gudang</h3>
+    {{-- Breakdown Cards --}}
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {{-- Gudang --}}
+        <x-filament::section compact>
+            <x-slot name="heading">
+                Gudang
+            </x-slot>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Berat:</span>
+                    <span class="font-semibold">{{ number_format($data['sales']['warehouse']['weight'], 2) }} kg</span>
                 </div>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Berat</span>
-                        <span
-                            class="font-bold text-green-700 dark:text-green-400">{{ number_format($data['sales']['warehouse']['weight'], 2) }}
-                            kg</span>
-                    </div>
-                    <div class="flex justify-between border-t border-green-200 dark:border-green-900/30 pt-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Nilai</span>
-                        <span class="font-bold text-green-700 dark:text-green-400">Rp
-                            {{ number_format($data['sales']['warehouse']['amount'], 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between border-t border-green-200 dark:border-green-900/30 pt-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Transaksi</span>
-                        <span
-                            class="rounded-full bg-green-200 dark:bg-green-900/30 px-3 py-1 text-sm font-semibold text-green-700 dark:text-green-400">
-                            {{ $data['sales']['warehouse']['count'] }}
-                        </span>
-                    </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Nilai:</span>
+                    <span class="font-bold text-success-600">Rp
+                        {{ number_format($data['sales']['warehouse']['amount'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Transaksi:</span>
+                    <x-filament::badge color="success"
+                        size="sm">{{ $data['sales']['warehouse']['count'] }}</x-filament::badge>
                 </div>
             </div>
+        </x-filament::section>
 
-            <!-- Market -->
-            <div class="rounded-lg border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10 p-4">
-                <div class="mb-4 flex items-center gap-2">
-                    <span class="text-2xl">🛒</span>
-                    <h3 class="font-semibold text-blue-900 dark:text-blue-400">Pasar</h3>
+        {{-- Pasar --}}
+        <x-filament::section compact>
+            <x-slot name="heading">
+                Pasar
+            </x-slot>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Berat:</span>
+                    <span class="font-semibold">{{ number_format($data['sales']['market']['weight'], 2) }} kg</span>
                 </div>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Berat</span>
-                        <span
-                            class="font-bold text-blue-700 dark:text-blue-400">{{ number_format($data['sales']['market']['weight'], 2) }}
-                            kg</span>
-                    </div>
-                    <div class="flex justify-between border-t border-blue-200 dark:border-blue-900/30 pt-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Nilai</span>
-                        <span class="font-bold text-blue-700 dark:text-blue-400">Rp
-                            {{ number_format($data['sales']['market']['amount'], 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between border-t border-blue-200 dark:border-blue-900/30 pt-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Transaksi</span>
-                        <span
-                            class="rounded-full bg-blue-200 dark:bg-blue-900/30 px-3 py-1 text-sm font-semibold text-blue-700 dark:text-blue-400">
-                            {{ $data['sales']['market']['count'] }}
-                        </span>
-                    </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Nilai:</span>
+                    <span class="font-bold text-info-600">Rp
+                        {{ number_format($data['sales']['market']['amount'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Transaksi:</span>
+                    <x-filament::badge color="info"
+                        size="sm">{{ $data['sales']['market']['count'] }}</x-filament::badge>
                 </div>
             </div>
+        </x-filament::section>
 
-            <!-- Retail -->
-            <div
-                class="rounded-lg border border-amber-200 dark:border-amber-900/30 bg-amber-50 dark:bg-amber-900/10 p-4">
-                <div class="mb-4 flex items-center gap-2">
-                    <span class="text-2xl">📦</span>
-                    <h3 class="font-semibold text-amber-900 dark:text-amber-400">Eceran</h3>
+        {{-- Eceran --}}
+        <x-filament::section compact>
+            <x-slot name="heading">
+                Eceran
+            </x-slot>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Berat:</span>
+                    <span class="font-semibold">{{ number_format($data['sales']['retail']['weight'], 2) }} kg</span>
                 </div>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Berat</span>
-                        <span
-                            class="font-bold text-amber-700 dark:text-amber-400">{{ number_format($data['sales']['retail']['weight'], 2) }}
-                            kg</span>
-                    </div>
-                    <div class="flex justify-between border-t border-amber-200 dark:border-amber-900/30 pt-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Nilai</span>
-                        <span class="font-bold text-amber-700 dark:text-amber-400">Rp
-                            {{ number_format($data['sales']['retail']['amount'], 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between border-t border-amber-200 dark:border-amber-900/30 pt-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Transaksi</span>
-                        <span
-                            class="rounded-full bg-amber-200 dark:bg-amber-900/30 px-3 py-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
-                            {{ $data['sales']['retail']['count'] }}
-                        </span>
-                    </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Nilai:</span>
+                    <span class="font-bold text-warning-600">Rp
+                        {{ number_format($data['sales']['retail']['amount'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Transaksi:</span>
+                    <x-filament::badge color="warning"
+                        size="sm">{{ $data['sales']['retail']['count'] }}</x-filament::badge>
                 </div>
             </div>
-        </div>
+        </x-filament::section>
     </div>
 
-    <!-- Detailed Sales Report -->
-    <div class="mb-8">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Detail Penjualan & Perhitungan Laba</h2>
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+    {{-- Detail Table --}}
+    <x-filament::section class="mb-6">
+        <x-slot name="heading">
+            Detail Transaksi & Perhitungan Laba
+        </x-slot>
+
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="table-header border-b border-gray-300 dark:border-gray-700">
-                        <th class="px-4 py-3 text-left">Tanggal</th>
-                        <th class="px-4 py-3 text-left">Kode</th>
-                        <th class="px-4 py-3 text-left">Petani</th>
-                        <th class="px-4 py-3 text-center">Tujuan</th>
-                        <th class="px-4 py-3 text-right">Berat</th>
-                        <th class="px-4 py-3 text-right">Beli/kg</th>
-                        <th class="px-4 py-3 text-right">Jual/kg</th>
-                        <th class="px-4 py-3 text-right">Laba/kg</th>
-                        <th class="px-4 py-3 text-right font-bold text-green-600 dark:text-green-400">Total Laba</th>
+                    <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                        <th class="px-3 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Tanggal</th>
+                        <th class="px-3 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Kode</th>
+                        <th class="px-3 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Petani</th>
+                        <th class="px-3 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">Tujuan</th>
+                        <th class="px-3 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Berat</th>
+                        <th class="px-3 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Beli/kg</th>
+                        <th class="px-3 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Jual/kg</th>
+                        <th class="px-3 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Total Laba</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse($salesDetailReport['sales'] as $sale)
-                        <tr class="table-row-hover bg-white dark:bg-gray-800">
-                            <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
-                                {{ $sale['sale_date']->format('d M Y') }}
+                    @forelse($salesDetail['sales'] as $sale)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="px-3 py-3 text-gray-600 dark:text-gray-400">
+                                {{ $sale['sale_date']->format('d M Y') }}</td>
+                            <td class="px-3 py-3">
+                                <x-filament::badge color="success"
+                                    size="sm">{{ $sale['sale_code'] }}</x-filament::badge>
                             </td>
-                            <td class="px-4 py-3">
-                                <span
-                                    class="badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                    {{ $sale['sale_code'] }}
-                                </span>
+                            <td class="px-3 py-3 font-medium text-gray-900 dark:text-white">{{ $sale['farmer_name'] }}
                             </td>
-                            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                                {{ $sale['farmer_name'] }}
+                            <td class="px-3 py-3 text-center">
+                                @php
+                                    $color = match ($sale['sale_type']) {
+                                        'Gudang' => 'success',
+                                        'Pasar' => 'info',
+                                        default => 'warning',
+                                    };
+                                @endphp
+                                <x-filament::badge :color="$color"
+                                    size="sm">{{ $sale['sale_type'] }}</x-filament::badge>
                             </td>
-                            <td class="px-4 py-3 text-center">
-                                <span
-                                    class="badge {{ $sale['sale_type'] === 'Gudang' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ($sale['sale_type'] === 'Pasar' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400') }}">
-                                    {{ $sale['sale_type'] }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
-                                {{ number_format($sale['weight_kg'], 2) }} kg
-                            </td>
-                            <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
-                                Rp {{ number_format($sale['buy_price_per_kg'], 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
-                                Rp {{ number_format($sale['sell_price_per_kg'], 0, ',', '.') }}
-                            </td>
+                            <td class="px-3 py-3 text-right text-gray-600 dark:text-gray-400">
+                                {{ number_format($sale['weight_kg'], 2) }} kg</td>
+                            <td class="px-3 py-3 text-right text-gray-600 dark:text-gray-400">Rp
+                                {{ number_format($sale['buy_price_per_kg'], 0, ',', '.') }}</td>
+                            <td class="px-3 py-3 text-right text-gray-600 dark:text-gray-400">Rp
+                                {{ number_format($sale['sell_price_per_kg'], 0, ',', '.') }}</td>
                             <td
-                                class="px-4 py-3 text-right font-semibold {{ $sale['profit_per_kg'] >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                Rp {{ number_format($sale['profit_per_kg'], 0, ',', '.') }}
-                            </td>
-                            <td
-                                class="px-4 py-3 text-right font-bold {{ $sale['total_profit'] >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                class="px-3 py-3 text-right font-bold {{ $sale['total_profit'] >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400' }}">
                                 Rp {{ number_format($sale['total_profit'], 0, ',', '.') }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
-                                <p class="text-lg">📭</p>
-                                <p class="mt-2">Belum ada data penjualan pada periode ini</p>
+                            <td colspan="8" class="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                                Tidak ada data pada periode ini
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
-                <tfoot>
-                    <tr class="table-header border-t-2 border-gray-300 dark:border-gray-700 font-bold">
-                        <td colspan="4" class="px-4 py-4 text-right">TOTAL:</td>
-                        <td class="px-4 py-4 text-right">
-                            {{ number_format($salesDetailReport['summary']['total_weight'], 2) }} kg
-                        </td>
-                        <td colspan="2" class="px-4 py-4 text-right">
-                            Rp {{ number_format($salesDetailReport['summary']['total_buy_amount'], 0, ',', '.') }}
-                        </td>
-                        <td class="px-4 py-4 text-right">
-                            Rp {{ number_format($salesDetailReport['summary']['total_sell_amount'], 0, ',', '.') }}
-                        </td>
-                        <td
-                            class="px-4 py-4 text-right {{ $salesDetailReport['summary']['total_profit'] >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                            <p>Rp {{ number_format($salesDetailReport['summary']['total_profit'], 0, ',', '.') }}</p>
-                            <p class="text-xs font-normal">
-                                (Margin: {{ number_format($salesDetailReport['summary']['profit_margin'], 1) }}%)
-                            </p>
-                        </td>
-                    </tr>
-                </tfoot>
+                @if (count($salesDetail['sales']) > 0)
+                    <tfoot>
+                        <tr
+                            class="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600 font-bold">
+                            <td colspan="4" class="px-3 py-3 text-right">TOTAL</td>
+                            <td class="px-3 py-3 text-right">
+                                {{ number_format($salesDetail['summary']['total_weight'], 2) }} kg</td>
+                            <td class="px-3 py-3 text-right">-</td>
+                            <td class="px-3 py-3 text-right">-</td>
+                            <td
+                                class="px-3 py-3 text-right {{ $salesDetail['summary']['total_profit'] >= 0 ? 'text-success-600' : 'text-danger-600' }}">
+                                Rp {{ number_format($salesDetail['summary']['total_profit'], 0, ',', '.') }}
+                                <span
+                                    class="block text-xs font-normal">({{ number_format($salesDetail['summary']['profit_margin'], 1) }}%)</span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         </div>
-    </div>
+    </x-filament::section>
 
-    <!-- Top Farmers -->
-    <div>
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Top Petani</h2>
-        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
-            <table class="w-full">
+    {{-- Top Farmers --}}
+    <x-filament::section class="mb-6">
+        <x-slot name="heading">
+            Top 5 Petani
+        </x-slot>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
                 <thead>
-                    <tr class="table-header border-b border-gray-300 dark:border-gray-700">
-                        <th class="px-6 py-4 text-left">#</th>
-                        <th class="px-6 py-4 text-left">Kode</th>
-                        <th class="px-6 py-4 text-left">Nama Petani</th>
-                        <th class="px-6 py-4 text-right">Total Kg</th>
+                    <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                        <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300 w-16">#</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Kode</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Nama</th>
+                        <th class="px-4 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Total Setoran
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($data['top_farmers'] as $index => $farmer)
-                        <tr class="table-row-hover bg-white dark:bg-gray-800">
-                            <td class="px-6 py-4 text-center">
-                                <span class="text-2xl">
-                                    @if ($index === 0)
-                                        🥇
-                                    @elseif($index === 1)
-                                        🥈
-                                    @elseif($index === 2)
-                                        🥉
-                                    @else
-                                        <span
-                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300">
-                                            {{ $index + 1 }}
-                                        </span>
-                                    @endif
-                                </span>
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="px-4 py-3 text-center font-bold">
+                                @if ($index === 0)
+                                    <span class="text-yellow-500">1</span>
+                                @elseif($index === 1)
+                                    <span class="text-gray-400">2</span>
+                                @elseif($index === 2)
+                                    <span class="text-amber-600">3</span>
+                                @else
+                                    {{ $index + 1 }}
+                                @endif
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="badge bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                    {{ $farmer->farmer_code }}
-                                </span>
+                            <td class="px-4 py-3">
+                                <x-filament::badge color="info"
+                                    size="sm">{{ $farmer->farmer_code }}</x-filament::badge>
                             </td>
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                {{ $farmer->name }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $farmer->name }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <span class="font-bold text-success-600 dark:text-success-400">
                                     {{ number_format($farmer->transactions_sum_weight_kg ?? 0, 2) }} kg
                                 </span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                <p class="text-lg">📭</p>
-                                <p class="mt-2">Belum ada data transaksi pada periode ini</p>
+                            <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                                Tidak ada data
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
+    </x-filament::section>
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Daily Chart with improved styling
-                const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-                new Chart(dailyCtx, {
-                    type: 'line',
-                    data: {
-                        labels: @json($chartData['labels']),
-                        datasets: [{
-                                label: 'Pembelian (Rp)',
-                                data: @json($chartData['purchases']),
-                                borderColor: 'rgb(59, 130, 246)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                                pointBackgroundColor: 'rgb(59, 130, 246)',
-                                pointBorderColor: '#fff',
-                                pointRadius: 4,
-                                pointHoverRadius: 6,
-                            },
-                            {
-                                label: 'Penjualan (Rp)',
-                                data: @json($chartData['sales']),
-                                borderColor: 'rgb(16, 185, 129)',
-                                backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                                pointBackgroundColor: 'rgb(16, 185, 129)',
-                                pointBorderColor: '#fff',
-                                pointRadius: 4,
-                                pointHoverRadius: 6,
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                labels: {
-                                    padding: 15,
-                                    font: {
-                                        size: 12,
-                                        weight: 'bold'
-                                    },
-                                    usePointStyle: true,
-                                }
-                            },
-                            filler: {
-                                propagate: true,
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return 'Rp ' + (value / 1000000 >= 1 ? (value / 1000000).toFixed(
-                                            1) + 'M' : (value / 1000).toFixed(0) + 'K');
-                                    }
-                                },
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)',
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false,
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // Sales Type Doughnut Chart with improved styling
-                const pieCtx = document.getElementById('salesTypeChart').getContext('2d');
-                new Chart(pieCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: @json($salesTypeData['labels']),
-                        datasets: [{
-                            data: @json($salesTypeData['data']),
-                            backgroundColor: [
-                                'rgba(16, 185, 129, 0.8)',
-                                'rgba(59, 130, 246, 0.8)',
-                                'rgba(245, 158, 11, 0.8)',
-                            ],
-                            borderColor: [
-                                'rgb(16, 185, 129)',
-                                'rgb(59, 130, 246)',
-                                'rgb(245, 158, 11)',
-                            ],
-                            borderWidth: 3,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'bottom',
-                                labels: {
-                                    padding: 15,
-                                    font: {
-                                        size: 12,
-                                        weight: 'bold'
-                                    },
-                                    usePointStyle: true,
-                                }
-                            }
-                        }
-                    }
-                });
-            });
-        </script>
-    @endpush
+    {{-- Footer Widgets (Charts) --}}
+    @if (count($this->getFooterWidgets()) > 0)
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Visualisasi Data</h3>
+            <x-filament-widgets::widgets :widgets="$this->getVisibleFooterWidgets()" :columns="$this->getFooterWidgetsColumns()" :data="['startDate' => $this->startDate, 'endDate' => $this->endDate]" />
+        </div>
+    @endif
 </x-filament-panels::page>
