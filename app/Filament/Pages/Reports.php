@@ -7,16 +7,13 @@ use App\Models\Sale;
 use App\Models\Farmer;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Pages\Page;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
 use UnitEnum;
@@ -32,7 +29,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // KONFIGURASI
     // =========================================================================
-    
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';
     protected static ?string $navigationLabel = 'Laporan';
     protected static ?string $title = 'Laporan & Analisis';
@@ -43,7 +40,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // STATE
     // =========================================================================
-    
+
     #[Url]
     public ?string $startDate = null;
 
@@ -55,7 +52,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // LIFECYCLE
     // =========================================================================
-    
+
     public function mount(): void
     {
         $this->startDate = $this->startDate ?? now()->startOfMonth()->format('Y-m-d');
@@ -65,7 +62,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // HEADING
     // =========================================================================
-    
+
     public function getSubheading(): ?string
     {
         $data = $this->getReportData();
@@ -75,7 +72,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // HEADER ACTIONS
     // =========================================================================
-    
+
     protected function getHeaderActions(): array
     {
         return [
@@ -90,17 +87,26 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // WIDGETS
     // =========================================================================
-    
+
     protected function getHeaderWidgets(): array
     {
         return [
             \App\Filament\Pages\Reports\Widgets\ReportStatsWidget::class,
+            \App\Filament\Pages\Reports\Widgets\ReportInsightStatsWidget::class,
         ];
+    }
+
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return 1;
     }
 
     protected function getFooterWidgets(): array
     {
         return [
+            \App\Filament\Pages\Reports\Widgets\SalesChannelsTableWidget::class,
+            \App\Filament\Pages\Reports\Widgets\SalesDetailTableWidget::class,
+            \App\Filament\Pages\Reports\Widgets\TopFarmersTableWidget::class,
             \App\Filament\Pages\Reports\Widgets\DailyTrendChartWidget::class,
             \App\Filament\Pages\Reports\Widgets\SalesTypeChartWidget::class,
         ];
@@ -114,10 +120,18 @@ class Reports extends Page implements HasForms
         ];
     }
 
+    public function getWidgetData(): array
+    {
+        return [
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
+        ];
+    }
+
     // =========================================================================
     // FORM (FILTER)
     // =========================================================================
-    
+
     public function form(Schema $schema): Schema
     {
         return $schema->components([
@@ -129,7 +143,7 @@ class Reports extends Page implements HasForms
                     ->displayFormat('d/m/Y')
                     ->live()
                     ->afterStateUpdated(fn () => $this->dispatch('$refresh')),
-                    
+
                 DatePicker::make('endDate')
                     ->label('Sampai Tanggal')
                     ->required()
@@ -137,7 +151,7 @@ class Reports extends Page implements HasForms
                     ->displayFormat('d/m/Y')
                     ->live()
                     ->afterStateUpdated(fn () => $this->dispatch('$refresh')),
-                    
+
                 Select::make('quickPeriod')
                     ->label('Periode Cepat')
                     ->options([
@@ -160,7 +174,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // HELPER METHODS
     // =========================================================================
-    
+
     protected function applyQuickPeriod(?string $period): void
     {
         if (!$period) return;
@@ -181,7 +195,7 @@ class Reports extends Page implements HasForms
     // =========================================================================
     // DATA METHODS
     // =========================================================================
-    
+
     public function getReportData(): array
     {
         $start = Carbon::parse($this->startDate);
@@ -300,8 +314,8 @@ class Reports extends Page implements HasForms
                 'total_buy_amount' => $sales->sum('total_buy_amount'),
                 'total_sell_amount' => $sales->sum('total_sell_amount'),
                 'total_profit' => $sales->sum('total_profit'),
-                'profit_margin' => $sales->sum('total_sell_amount') > 0 
-                    ? ($sales->sum('total_profit') / $sales->sum('total_sell_amount')) * 100 
+                'profit_margin' => $sales->sum('total_sell_amount') > 0
+                    ? ($sales->sum('total_profit') / $sales->sum('total_sell_amount')) * 100
                     : 0,
             ],
         ];
