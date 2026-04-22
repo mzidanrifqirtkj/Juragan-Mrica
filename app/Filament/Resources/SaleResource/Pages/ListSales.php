@@ -20,8 +20,8 @@ class ListSales extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->label('Buat Penjualan')
-                ->disabled(fn() => $currentStock <= 0)
-                ->tooltip(fn() => $currentStock <= 0 ? 'Stok kosong, tidak bisa membuat penjualan' : null),
+                ->disabled(fn () => $currentStock <= 0)
+                ->tooltip(fn () => $currentStock <= 0 ? 'Stok kosong, tidak bisa membuat penjualan' : null),
         ];
     }
 
@@ -37,15 +37,18 @@ class ListSales extends ListRecords
         return [
             'semua' => Tab::make('Semua')
                 ->icon('heroicon-o-rectangle-stack'),
-            'retail' => Tab::make('Retail (Pasar)')
+            'warehouse' => Tab::make('Gudang')
+                ->icon('heroicon-o-home-modern')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('sale_type', 'warehouse')),
+            'market' => Tab::make('Pasar')
+                ->icon('heroicon-o-building-storefront')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('sale_type', 'market')),
+            'retail' => Tab::make('Eceran')
                 ->icon('heroicon-o-shopping-cart')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('sale_type', 'retail')),
-            'bulk' => Tab::make('Bulk (Pengepul)')
-                ->icon('heroicon-o-cube')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('sale_type', 'bulk')),
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('sale_type', 'retail')),
             'hari_ini' => Tab::make('Hari Ini')
                 ->icon('heroicon-o-calendar')
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereDate('sale_date', today())),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('sale_date', today())),
         ];
     }
 }

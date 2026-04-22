@@ -2,9 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Transaction;
-use App\Models\Sale;
 use App\Models\Farmer;
+use App\Models\Sale;
+use App\Models\Transaction;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -13,6 +13,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
@@ -31,10 +32,15 @@ class Reports extends Page implements HasForms
     // =========================================================================
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';
+
     protected static ?string $navigationLabel = 'Laporan';
+
     protected static ?string $title = 'Laporan & Analisis';
+
     protected static string|UnitEnum|null $navigationGroup = 'Laporan';
+
     protected static ?int $navigationSort = 1;
+
     protected string $view = 'filament.pages.reports';
 
     // =========================================================================
@@ -66,6 +72,7 @@ class Reports extends Page implements HasForms
     public function getSubheading(): ?string
     {
         $data = $this->getReportData();
+
         return "Periode: {$data['period']['start']} - {$data['period']['end']}";
     }
 
@@ -142,7 +149,10 @@ class Reports extends Page implements HasForms
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->live()
-                    ->afterStateUpdated(fn () => $this->dispatch('$refresh')),
+                    ->afterStateUpdated(function () {
+                        $this->quickPeriod = null;
+                        $this->dispatch('$refresh');
+                    }),
 
                 DatePicker::make('endDate')
                     ->label('Sampai Tanggal')
@@ -150,7 +160,10 @@ class Reports extends Page implements HasForms
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->live()
-                    ->afterStateUpdated(fn () => $this->dispatch('$refresh')),
+                    ->afterStateUpdated(function () {
+                        $this->quickPeriod = null;
+                        $this->dispatch('$refresh');
+                    }),
 
                 Select::make('quickPeriod')
                     ->label('Periode Cepat')
@@ -163,8 +176,8 @@ class Reports extends Page implements HasForms
                     ])
                     ->placeholder('Pilih...')
                     ->live()
-                    ->afterStateUpdated(function ($state) {
-                        $this->applyQuickPeriod($state);
+                    ->afterStateUpdated(function ($state, Set $set) {
+                        $this->applyQuickPeriod($state, $set);
                         $this->dispatch('$refresh');
                     }),
             ]),
@@ -175,11 +188,15 @@ class Reports extends Page implements HasForms
     // HELPER METHODS
     // =========================================================================
 
-    protected function applyQuickPeriod(?string $period): void
+    protected function applyQuickPeriod(?string $period, ?Set $set = null): void
     {
-        if (!$period) return;
+        if (! $period) {
+            $this->quickPeriod = null;
 
-        [$start, $end] = match($period) {
+            return;
+        }
+
+        [$start, $end] = match ($period) {
             'today' => [now()->startOfDay(), now()],
             'yesterday' => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
             'this_week' => [now()->startOfWeek(), now()],
@@ -190,6 +207,12 @@ class Reports extends Page implements HasForms
 
         $this->startDate = $start->format('Y-m-d');
         $this->endDate = $end->format('Y-m-d');
+        $this->quickPeriod = $period;
+
+        if ($set) {
+            $set('startDate', $this->startDate);
+            $set('endDate', $this->endDate);
+        }
     }
 
     // =========================================================================
@@ -226,7 +249,7 @@ class Reports extends Page implements HasForms
 
         // Top Farmers
         $topFarmers = Farmer::withSum([
-            'transactions' => fn ($query) => $query->whereBetween('transaction_date', [$start, $end])
+            'transactions' => fn ($query) => $query->whereBetween('transaction_date', [$start, $end]),
         ], 'weight_kg')
             ->orderByDesc('transactions_sum_weight_kg')
             ->limit(5)

@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\CodeGeneratorService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Services\CodeGeneratorService;
-use App\Services\InventoryService;
 
 class Sale extends Model
 {
@@ -102,11 +101,19 @@ class Sale extends Model
     }
 
     /**
-     * Scope for bulk sales (pengepul)
+     * Scope for warehouse sales
+     */
+    public function scopeWarehouse($query)
+    {
+        return $query->where('sale_type', 'warehouse');
+    }
+
+    /**
+     * Legacy alias for warehouse sales
      */
     public function scopeBulk($query)
     {
-        return $query->where('sale_type', 'bulk');
+        return $query->where('sale_type', 'warehouse');
     }
 
     /**
@@ -131,7 +138,7 @@ class Sale extends Model
      */
     public function scopeDateRange($query, $startDate, $endDate)
     {
-        return $query->whereBetween('sale_date', [ $startDate, $endDate ]);
+        return $query->whereBetween('sale_date', [$startDate, $endDate]);
     }
 
     /**
@@ -140,9 +147,10 @@ class Sale extends Model
     public function getSaleTypeBadgeColorAttribute(): string
     {
         return match ($this->sale_type) {
+            'warehouse', 'bulk' => 'success',
+            'market' => 'primary',
             'retail' => 'warning',
-            'bulk'   => 'success',
-            default  => 'gray',
+            default => 'gray',
         };
     }
 
@@ -152,9 +160,10 @@ class Sale extends Model
     public function getSaleTypeLabelAttribute(): string
     {
         return match ($this->sale_type) {
-            'retail' => 'Pasar (Retail)',
-            'bulk'   => 'Pengepul (Bulk)',
-            default  => $this->sale_type,
+            'warehouse', 'bulk' => 'Gudang',
+            'market' => 'Pasar',
+            'retail' => 'Eceran',
+            default => $this->sale_type,
         };
     }
 }

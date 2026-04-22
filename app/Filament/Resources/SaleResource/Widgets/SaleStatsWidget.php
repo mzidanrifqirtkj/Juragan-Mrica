@@ -14,29 +14,32 @@ class SaleStatsWidget extends BaseWidget
         $thisMonth = Sale::whereMonth('sale_date', now()->month)
             ->whereYear('sale_date', now()->year);
 
+        $warehouseMonth = Sale::warehouse()->thisMonth();
+        $marketMonth = Sale::query()->where('sale_type', 'market')
+            ->whereMonth('sale_date', now()->month)
+            ->whereYear('sale_date', now()->year);
         $retailMonth = Sale::retail()->thisMonth();
-        $bulkMonth = Sale::bulk()->thisMonth();
 
         return [
-            Stat::make('Penjualan Hari Ini', number_format($today->sum('weight_kg'), 2) . ' kg')
-                ->description('Rp ' . number_format($today->sum('total_amount'), 0, ',', '.'))
+            Stat::make('Penjualan Hari Ini', number_format($today->sum('weight_kg'), 2).' kg')
+                ->description('Rp '.number_format($today->sum('total_amount'), 0, ',', '.'))
                 ->descriptionIcon('heroicon-m-arrow-up-tray')
                 ->color('success'),
 
-            Stat::make('Retail Bulan Ini', number_format($retailMonth->sum('weight_kg'), 2) . ' kg')
-                ->description('Rp ' . number_format($retailMonth->sum('total_amount'), 0, ',', '.'))
-                ->descriptionIcon('heroicon-m-shopping-cart')
-                ->color('warning'),
+            Stat::make('Gudang Bulan Ini', number_format($warehouseMonth->sum('weight_kg'), 2).' kg')
+                ->description('Rp '.number_format($warehouseMonth->sum('total_amount'), 0, ',', '.'))
+                ->descriptionIcon('heroicon-m-home-modern')
+                ->color('success'),
 
-            Stat::make('Bulk Bulan Ini', number_format($bulkMonth->sum('weight_kg'), 2) . ' kg')
-                ->description('Rp ' . number_format($bulkMonth->sum('total_amount'), 0, ',', '.'))
-                ->descriptionIcon('heroicon-m-cube')
+            Stat::make('Pasar Bulan Ini', number_format($marketMonth->sum('weight_kg'), 2).' kg')
+                ->description('Rp '.number_format($marketMonth->sum('total_amount'), 0, ',', '.'))
+                ->descriptionIcon('heroicon-m-building-storefront')
                 ->color('info'),
 
-            Stat::make('Total Bulan Ini', 'Rp ' . number_format($thisMonth->sum('total_amount'), 0, ',', '.'))
-                ->description($thisMonth->count() . ' transaksi')
-                ->descriptionIcon('heroicon-m-chart-bar')
-                ->color('primary'),
+            Stat::make('Eceran Bulan Ini', number_format($retailMonth->sum('weight_kg'), 2).' kg')
+                ->description('Rp '.number_format($retailMonth->sum('total_amount'), 0, ',', '.'))
+                ->descriptionIcon('heroicon-m-shopping-cart')
+                ->color('warning'),
         ];
     }
 }

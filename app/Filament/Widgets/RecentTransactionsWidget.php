@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class RecentTransactionsWidget extends BaseWidget
 {
-    protected static ?string $heading = '📋 Setoran Terbaru';
+    protected static ?string $heading = 'Setoran Terbaru';
 
     protected static ?string $description = '10 transaksi setoran terakhir';
 

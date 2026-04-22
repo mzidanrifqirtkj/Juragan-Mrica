@@ -30,17 +30,14 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            StockOverviewWidget::class,       // Full width - Stock gauge + info
-            StatsOverviewWidget::class,       // Stats cards row
-            StockAlertWidget::class,          // Alert if needed
-            TransactionChartWidget::class,    // Chart - full width
-            RecentTransactionsWidget::class,  // Table - full width
+            StockOverviewWidget::class,
+            StatsOverviewWidget::class,
+            StockAlertWidget::class,
+            TransactionChartWidget::class,
+            RecentTransactionsWidget::class,
         ];
     }
 
-    /**
-     * Configure responsive columns
-     */
     public function getColumns(): int|array
     {
         return [

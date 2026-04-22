@@ -5,7 +5,6 @@ namespace App\Filament\Widgets;
 use App\Models\Transaction;
 use App\Models\Sale;
 use App\Models\Farmer;
-use App\Services\InventoryService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -42,37 +41,23 @@ class StatsOverviewWidget extends BaseWidget
                 ->description(number_format($todayWeight, 1) . ' kg diterima hari ini')
                 ->descriptionIcon('heroicon-m-arrow-down-tray')
                 ->color('primary')
-                ->chart($this->getTransactionChartData())
-                ->extraAttributes([
-                        'class' => 'ring-1 ring-primary-500/20 dark:ring-primary-400/20',
-                    ]),
+                ->chart($this->getTransactionChartData()),
 
             Stat::make('Penjualan Hari Ini', $todaySalesCount . ' transaksi')
                 ->description('Rp ' . number_format($todaySalesAmount, 0, ',', '.') . ' pendapatan')
                 ->descriptionIcon('heroicon-m-arrow-up-tray')
                 ->color('success')
-                ->chart($this->getSalesChartData())
-                ->extraAttributes([
-                        'class' => 'ring-1 ring-success-500/20 dark:ring-success-400/20',
-                    ]),
+                ->chart($this->getSalesChartData()),
 
             Stat::make('Petani Aktif', $activeFarmers . ' petani')
                 ->description('Dari total ' . $totalFarmers . ' petani terdaftar')
                 ->descriptionIcon('heroicon-m-user-group')
-                ->color('info')
-                ->extraAttributes([
-                        'class' => 'ring-1 ring-info-500/20 dark:ring-info-400/20',
-                    ]),
+                ->color('info'),
 
             Stat::make('Laba Bulan Ini', 'Rp ' . number_format(abs($profit), 0, ',', '.'))
                 ->description($profit >= 0 ? 'Profit bulan ' . now()->translatedFormat('F') : 'Kerugian bulan ' . now()->translatedFormat('F'))
                 ->descriptionIcon($profit >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($profit >= 0 ? 'success' : 'danger')
-                ->extraAttributes([
-                        'class' => $profit >= 0
-                            ? 'ring-1 ring-success-500/20 dark:ring-success-400/20'
-                            : 'ring-1 ring-danger-500/20 dark:ring-danger-400/20',
-                    ]),
+                ->color($profit >= 0 ? 'success' : 'danger'),
         ];
     }
 
@@ -96,4 +81,3 @@ class StatsOverviewWidget extends BaseWidget
         return $data;
     }
 }
-
