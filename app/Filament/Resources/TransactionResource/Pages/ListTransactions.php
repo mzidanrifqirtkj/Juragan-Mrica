@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Filament\Resources\TransactionResource;
 use App\Services\InventoryService;
+use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -17,7 +18,8 @@ class ListTransactions extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Input Setoran'),
+                ->label('Input Setoran')
+                ->visible(fn (): bool => Access::can('transactions.create')),
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SaleResource\Pages;
 use App\Models\Sale;
 use App\Services\InventoryService;
+use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Resources\Resource;
@@ -22,6 +23,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class SaleResource extends Resource
@@ -193,7 +195,7 @@ class SaleResource extends Resource
                         ->sortable(),
 
                     Tables\Columns\TextColumn::make('user.name')
-                        ->label('Kasir')
+                        ->label('Petani')
                         ->sortable()
                         ->toggleable(isToggledHiddenByDefault: true),
                 ])
@@ -221,11 +223,13 @@ class SaleResource extends Resource
                 ])
             ->actions([
                     Actions\ViewAction::make(),
-                    Actions\EditAction::make(),
+                    Actions\EditAction::make()
+                        ->visible(fn (): bool => static::canEdit(new Sale())),
                 ])
             ->bulkActions([
                     Actions\BulkActionGroup::make([
-                        Actions\DeleteBulkAction::make(),
+                        Actions\DeleteBulkAction::make()
+                            ->visible(fn (): bool => Access::can('sales.delete')),
                     ]),
                 ])
             ->defaultSort('sale_date', 'desc');
@@ -269,7 +273,7 @@ class SaleResource extends Resource
                                     ->label('Tanggal Penjualan')
                                     ->dateTime('d M Y H:i'),
                                 Infolists\Components\TextEntry::make('user.name')
-                                    ->label('Kasir'),
+                                    ->label('Petani'),
                                 Infolists\Components\TextEntry::make('notes')
                                     ->label('Catatan')
                                     ->columnSpanFull(),
@@ -300,5 +304,35 @@ class SaleResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'success';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! Access::petani() && Access::can('sales.view');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return ! Access::petani() && Access::can('sales.view');
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('sales.view');
+    }
+
+    public static function canCreate(): bool
+    {
+        return ! Access::petani() && Access::can('sales.create');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('sales.edit');
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('sales.delete');
     }
 }

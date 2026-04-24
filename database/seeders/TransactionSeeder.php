@@ -18,7 +18,7 @@ class TransactionSeeder extends Seeder
     public function run(): void
     {
         $farmers = Farmer::all();
-        $kasir = User::where('role', 'kasir')->first();
+        $petani = User::where('role', 'petani')->first();
 
         // Generate 25 transactions over the last 30 days
         $transactions = [];
@@ -55,7 +55,7 @@ class TransactionSeeder extends Seeder
                 'is_sold' => false, // All new transactions start as unsold
                 'transaction_date' => $data[ 'date' ],
                 'notes' => rand(0, 1) ? 'Lada kering kualitas ' . [ 'A', 'B', 'C' ][ rand(0, 2) ] : null,
-                'created_by' => $kasir->id,
+                'created_by' => $petani->id,
             ]);
 
             // Add stock to inventory

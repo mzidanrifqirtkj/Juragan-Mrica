@@ -16,7 +16,7 @@ class SaleSeeder extends Seeder
      */
     public function run(): void
     {
-        $kasir = User::where('role', 'kasir')->first();
+        $petani = User::where('role', 'petani')->first();
 
         // Buyers data for different sale types
         $warehouseBuyers = [
@@ -107,7 +107,7 @@ class SaleSeeder extends Seeder
                     'total_amount' => $data[ 'weight' ] * $data[ 'price' ],
                     'sale_date' => $data[ 'date' ],
                     'notes' => $data[ 'type' ] === 'warehouse' ? 'Penjualan ke gudang besar' : null,
-                    'created_by' => $kasir->id,
+                    'created_by' => $petani->id,
                 ]);
 
                 // Reduce stock via InventoryService
@@ -120,5 +120,4 @@ class SaleSeeder extends Seeder
         }
     }
 }
-
 

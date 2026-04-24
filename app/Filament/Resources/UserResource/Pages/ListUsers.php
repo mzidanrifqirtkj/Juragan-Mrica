@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
+use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,7 +15,8 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Tambah Pengguna'),
+                ->label('Tambah Pengguna')
+                ->visible(fn (): bool => Access::can('users.create')),
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Transaction;
 use App\Models\Setting;
+use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Resources\Resource;
@@ -22,6 +23,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 use Filament\Infolists\Components\TextEntry;
 
@@ -179,7 +181,7 @@ class TransactionResource extends Resource
                         ->sortable(),
 
                     Tables\Columns\TextColumn::make('user.name')
-                        ->label('Kasir')
+                        ->label('Petani')
                         ->sortable()
                         ->toggleable(isToggledHiddenByDefault: true),
                 ])
@@ -193,6 +195,7 @@ class TransactionResource extends Resource
 
                     Tables\Filters\SelectFilter::make('farmer')
                         ->relationship('farmer', 'name')
+                        ->visible(fn (): bool => ! Access::petani())
                         ->searchable()
                         ->preload(),
 
@@ -238,22 +241,25 @@ class TransactionResource extends Resource
                 ])
             ->actions([
                     Actions\ViewAction::make(),
-                    Actions\EditAction::make(),
+                    Actions\EditAction::make()
+                        ->visible(fn (): bool => static::canEdit(new Transaction())),
                     Actions\Action::make('mark_paid')
                         ->label('Tandai Lunas')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->visible(fn(Transaction $record) => $record->payment_status === 'pending')
+                        ->visible(fn(Transaction $record) => ! Access::petani() && Access::can('transactions.custom') && $record->payment_status === 'pending')
                         ->requiresConfirmation()
                         ->action(fn(Transaction $record) => $record->update([ 'payment_status' => 'paid' ])),
                 ])
             ->bulkActions([
                     Actions\BulkActionGroup::make([
-                        Actions\DeleteBulkAction::make(),
+                        Actions\DeleteBulkAction::make()
+                            ->visible(fn (): bool => ! Access::petani() && Access::can('transactions.delete')),
                         Actions\BulkAction::make('mark_paid_bulk')
                             ->label('Tandai Lunas')
                             ->icon('heroicon-o-check-circle')
                             ->color('success')
+                            ->visible(fn (): bool => ! Access::petani() && Access::can('transactions.custom'))
                             ->action(fn($records) => $records->each->update([ 'payment_status' => 'paid' ])),
                     ]),
                 ])
@@ -300,7 +306,7 @@ class TransactionResource extends Resource
                                     ->dateTime('d M Y H:i'),
 
                                 Infolists\Components\TextEntry::make('user.name')
-                                    ->label('Kasir'),
+                                    ->label('Petani'),
 
                                 Infolists\Components\TextEntry::make('notes')
                                     ->label('Catatan')
@@ -328,11 +334,54 @@ class TransactionResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('payment_status', 'pending')->count() ?: null;
+        $query = static::scopeEloquentQuery(static::getModel()::query())
+            ->where('payment_status', 'pending');
+
+        return $query->count() ?: null;
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
         return 'warning';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Access::can('transactions.view') && Access::petaniConfigured();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Access::can('transactions.view') && Access::petaniConfigured();
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return Access::can('transactions.view') && $record instanceof Transaction && Access::ownsTransaction($record);
+    }
+
+    public static function canCreate(): bool
+    {
+        return ! Access::petani() && Access::can('transactions.create');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('transactions.edit') && $record instanceof Transaction && Access::ownsTransaction($record);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('transactions.delete') && $record instanceof Transaction && Access::ownsTransaction($record);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::scopeEloquentQuery(parent::getEloquentQuery()->with(['farmer', 'creator']));
+    }
+
+    protected static function scopeEloquentQuery(Builder $query): Builder
+    {
+        return Access::restrictPetaniTransactionQuery($query);
     }
 }

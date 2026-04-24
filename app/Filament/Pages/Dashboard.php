@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Support\Access;
 use App\Filament\Widgets\RecentTransactionsWidget;
+use App\Filament\Widgets\PetaniProfileWarningWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use App\Filament\Widgets\StockAlertWidget;
 use App\Filament\Widgets\StockOverviewWidget;
@@ -24,18 +26,41 @@ class Dashboard extends BaseDashboard
         return 'Dashboard';
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Access::can('dashboard.view');
+    }
+
+    public static function canAccess(): bool
+    {
+        return Access::can('dashboard.view');
+    }
+
     /**
      * Get dashboard widgets in optimal order
      */
     public function getWidgets(): array
     {
-        return [
-            StockOverviewWidget::class,
-            StatsOverviewWidget::class,
-            StockAlertWidget::class,
-            TransactionChartWidget::class,
-            RecentTransactionsWidget::class,
-        ];
+        if (Access::petani() && ! Access::petaniConfigured()) {
+            return [
+                PetaniProfileWarningWidget::class,
+            ];
+        }
+
+        $widgets = [];
+
+        if (Access::can('inventory.view')) {
+            $widgets[] = StockOverviewWidget::class;
+            $widgets[] = StockAlertWidget::class;
+        }
+
+        if (Access::can('transactions.view') || Access::can('sales.view') || Access::can('reports.view')) {
+            $widgets[] = StatsOverviewWidget::class;
+            $widgets[] = TransactionChartWidget::class;
+            $widgets[] = RecentTransactionsWidget::class;
+        }
+
+        return $widgets;
     }
 
     public function getColumns(): int|array

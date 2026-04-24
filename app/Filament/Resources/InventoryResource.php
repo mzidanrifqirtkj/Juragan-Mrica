@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InventoryResource\Pages;
 use App\Models\InventoryLog;
 use App\Services\InventoryService;
+use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Resources\Resource;
@@ -13,6 +14,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class InventoryResource extends Resource
@@ -140,6 +142,21 @@ class InventoryResource extends Resource
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! Access::petani() && Access::can('inventory.view');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return ! Access::petani() && Access::can('inventory.view');
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('inventory.view');
     }
 
     public static function getNavigationBadge(): ?string

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Filament\Resources\TransactionResource;
+use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
@@ -15,7 +16,8 @@ class EditTransaction extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->visible(fn (): bool => Access::can('transactions.delete')),
         ];
     }
 

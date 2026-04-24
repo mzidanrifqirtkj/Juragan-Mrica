@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Farmer;
 use App\Models\Sale;
 use App\Models\Transaction;
+use App\Support\Access;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -63,6 +64,16 @@ class Reports extends Page implements HasForms
     {
         $this->startDate = $this->startDate ?? now()->startOfMonth()->format('Y-m-d');
         $this->endDate = $this->endDate ?? now()->format('Y-m-d');
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! Access::petani() && Access::can('reports.view');
+    }
+
+    public static function canAccess(): bool
+    {
+        return ! Access::petani() && Access::can('reports.view');
     }
 
     // =========================================================================

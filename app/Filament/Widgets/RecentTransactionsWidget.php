@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Transaction;
+use App\Support\Access;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -17,15 +18,20 @@ class RecentTransactionsWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return Access::can('transactions.view') && Access::petaniConfigured();
+    }
+
     public function table(Table $table): Table
     {
+        $query = Access::restrictPetaniTransactionQuery(Transaction::query())
+            ->with('farmer')
+            ->latest('transaction_date')
+            ->limit(10);
+
         return $table
-            ->query(
-                Transaction::query()
-                    ->with('farmer')
-                    ->latest('transaction_date')
-                    ->limit(10)
-            )
+            ->query($query)
             ->columns([
                     Tables\Columns\TextColumn::make('transaction_code')
                         ->label('Kode')
@@ -37,6 +43,7 @@ class RecentTransactionsWidget extends BaseWidget
 
                     Tables\Columns\TextColumn::make('farmer.name')
                         ->label('Petani')
+                        ->visible(fn (): bool => ! Access::petani())
                         ->description(fn(Transaction $record) => $record->farmer?->farmer_code)
                         ->searchable(),
 
@@ -72,8 +79,8 @@ class RecentTransactionsWidget extends BaseWidget
                 ])
             ->striped()
             ->paginated(false)
-            ->emptyStateHeading('Belum ada setoran')
-            ->emptyStateDescription('Transaksi setoran dari petani akan muncul di sini')
+            ->emptyStateHeading(Access::petani() ? 'Belum ada setoran pribadi' : 'Belum ada setoran')
+            ->emptyStateDescription(Access::petani() ? 'Setoran Anda akan muncul di sini setelah dicatat admin.' : 'Transaksi setoran dari petani akan muncul di sini')
             ->emptyStateIcon('heroicon-o-document-text');
     }
 }

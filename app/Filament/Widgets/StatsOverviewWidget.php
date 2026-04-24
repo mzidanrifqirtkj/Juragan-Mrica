@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Support\Access;
 use App\Models\Transaction;
 use App\Models\Sale;
 use App\Models\Farmer;
@@ -15,16 +16,54 @@ class StatsOverviewWidget extends BaseWidget
     // Full width untuk stats cards
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return Access::can('transactions.view') && Access::petaniConfigured();
+    }
+
     protected function getStats(): array
     {
-        $todayTransactions = Transaction::whereDate('transaction_date', today());
-        $todaySales = Sale::whereDate('sale_date', today());
+        $todayTransactions = Access::restrictPetaniTransactionQuery(Transaction::query())
+            ->whereDate('transaction_date', today());
 
-        $monthTransactions = Transaction::whereMonth('transaction_date', now()->month)
+        $monthTransactions = Access::restrictPetaniTransactionQuery(Transaction::query())
+            ->whereMonth('transaction_date', now()->month)
             ->whereYear('transaction_date', now()->year);
+
         $monthSales = Sale::whereMonth('sale_date', now()->month)
             ->whereYear('sale_date', now()->year);
 
+        if (Access::petani()) {
+            $pendingTransactions = (clone $monthTransactions)->where('payment_status', 'pending')->count();
+            $paidTransactions = (clone $monthTransactions)->where('payment_status', 'paid')->count();
+            $monthWeight = (clone $monthTransactions)->sum('weight_kg');
+            $monthTotal = (clone $monthTransactions)->sum('total_amount');
+
+            return [
+                Stat::make('Setoran Saya Bulan Ini', number_format($monthWeight, 2) . ' kg')
+                    ->description((clone $monthTransactions)->count() . ' transaksi setoran tercatat')
+                    ->descriptionIcon('heroicon-m-arrow-down-tray')
+                    ->color('primary')
+                    ->chart($this->getTransactionChartData()),
+
+                Stat::make('Nilai Setoran Saya', 'Rp ' . number_format($monthTotal, 0, ',', '.'))
+                    ->description('Akumulasi nilai setoran bulan ' . now()->translatedFormat('F'))
+                    ->descriptionIcon('heroicon-m-banknotes')
+                    ->color('success'),
+
+                Stat::make('Menunggu Pembayaran', $pendingTransactions . ' transaksi')
+                    ->description('Setoran yang belum dibayar')
+                    ->descriptionIcon('heroicon-m-clock')
+                    ->color($pendingTransactions > 0 ? 'warning' : 'gray'),
+
+                Stat::make('Sudah Dibayar', $paidTransactions . ' transaksi')
+                    ->description(number_format((clone $todayTransactions)->sum('weight_kg'), 2) . ' kg disetor hari ini')
+                    ->descriptionIcon('heroicon-m-check-badge')
+                    ->color('info'),
+            ];
+        }
+
+        $todaySales = Sale::whereDate('sale_date', today());
         $totalPurchase = (clone $monthTransactions)->sum('total_amount');
         $totalSales = (clone $monthSales)->sum('total_amount');
         $profit = $totalSales - $totalPurchase;
@@ -66,7 +105,9 @@ class StatsOverviewWidget extends BaseWidget
         $data = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
-            $data[] = Transaction::whereDate('transaction_date', $date)->count();
+            $data[] = Access::restrictPetaniTransactionQuery(Transaction::query())
+                ->whereDate('transaction_date', $date)
+                ->count();
         }
         return $data;
     }

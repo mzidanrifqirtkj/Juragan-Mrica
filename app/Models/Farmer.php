@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Services\CodeGeneratorService;
 
 class Farmer extends Model
@@ -44,6 +45,14 @@ class Farmer extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Get the linked login account for this farmer.
+     */
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class);
     }
 
     /**

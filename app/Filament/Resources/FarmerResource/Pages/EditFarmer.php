@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FarmerResource\Pages;
 
 use App\Filament\Resources\FarmerResource;
+use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
@@ -15,7 +16,14 @@ class EditFarmer extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\Action::make('create_user')
+                ->label('Buatkan Akun')
+                ->icon('heroicon-o-user-plus')
+                ->color('primary')
+                ->url(fn (): string => FarmerResource::getCreateUserUrl($this->record))
+                ->visible(fn (): bool => FarmerResource::canCreateUser($this->record)),
+            Actions\DeleteAction::make()
+                ->visible(fn (): bool => Access::can('farmers.delete')),
         ];
     }
 

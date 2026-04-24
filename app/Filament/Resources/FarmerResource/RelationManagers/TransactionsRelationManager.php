@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\FarmerResource\RelationManagers;
 
+use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class TransactionsRelationManager extends RelationManager
 {
@@ -16,6 +18,11 @@ class TransactionsRelationManager extends RelationManager
     protected static ?string $title = 'Riwayat Transaksi';
 
     protected static ?string $modelLabel = 'Transaksi';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return Access::can('transactions.view');
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -74,16 +81,20 @@ class TransactionsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Actions\CreateAction::make(),
+                Actions\CreateAction::make()
+                    ->visible(fn (): bool => ! Access::petani() && Access::can('transactions.create')),
             ])
             ->actions([
                 Actions\ViewAction::make(),
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
+                Actions\EditAction::make()
+                    ->visible(fn (): bool => ! Access::petani() && Access::can('transactions.edit')),
+                Actions\DeleteAction::make()
+                    ->visible(fn (): bool => ! Access::petani() && Access::can('transactions.delete')),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+                    Actions\DeleteBulkAction::make()
+                        ->visible(fn (): bool => ! Access::petani() && Access::can('transactions.delete')),
                 ]),
             ])
             ->defaultSort('transaction_date', 'desc');

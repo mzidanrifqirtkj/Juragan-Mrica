@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Farmer;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -13,9 +14,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $petaniProfile = Farmer::query()->first();
+
         // Create Owner
         User::create([
             'name' => 'Owner Warung',
+            'username' => 'owner',
             'email' => 'owner@warungsetor.test',
             'password' => Hash::make('12345678'),
             'role' => 'owner',
@@ -26,6 +30,7 @@ class UserSeeder extends Seeder
         // Create Admin
         User::create([
             'name' => 'Admin',
+            'username' => 'admin',
             'email' => 'admin@warungsetor.test',
             'password' => Hash::make('12345678'),
             'role' => 'admin',
@@ -33,12 +38,14 @@ class UserSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
-        // Create Kasir
+        // Create Petani
         User::create([
-            'name' => 'Kasir 1',
-            'email' => 'kasir@warungsetor.test',
+            'name' => 'Petani 1',
+            'username' => 'petani1',
+            'email' => 'petani@warungsetor.test',
             'password' => Hash::make('12345678'),
-            'role' => 'kasir',
+            'role' => 'petani',
+            'farmer_id' => $petaniProfile?->id,
             'is_active' => true,
             'email_verified_at' => now(),
         ]);

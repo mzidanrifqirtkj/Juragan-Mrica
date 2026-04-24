@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SaleResource\Pages;
 
 use App\Filament\Resources\SaleResource;
 use App\Services\InventoryService;
+use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -20,6 +21,7 @@ class ListSales extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->label('Buat Penjualan')
+                ->visible(fn (): bool => Access::can('sales.create'))
                 ->disabled(fn () => $currentStock <= 0)
                 ->tooltip(fn () => $currentStock <= 0 ? 'Stok kosong, tidak bisa membuat penjualan' : null),
         ];

@@ -3,18 +3,22 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\Farmer;
 use App\Models\User;
+use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class UserResource extends Resource
@@ -44,11 +48,21 @@ class UserResource extends Resource
                             ->required()
                             ->maxLength(255),
 
-                        TextInput::make('email')
-                            ->label('Email')
-                            ->email()
+                        TextInput::make('username')
+                            ->label('Username')
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->alphaDash()
+                            ->dehydrateStateUsing(fn ($state) => strtolower((string) $state))
+                            ->helperText('Gunakan huruf kecil, angka, atau tanda hubung. Username dipakai untuk login.')
+                            ->maxLength(255),
+
+                        TextInput::make('email')
+                            ->label('Email')
+                            ->rule('nullable')
+                            ->email()
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Boleh dikosongkan. Jika diisi, gunakan email yang aktif.')
                             ->maxLength(255),
 
                         TextInput::make('password')
@@ -68,10 +82,36 @@ class UserResource extends Resource
                             ->options([
                                 'owner' => 'Owner',
                                 'admin' => 'Admin',
-                                'kasir' => 'Kasir',
+                                'petani' => 'Petani',
                             ])
                             ->required()
-                            ->default('kasir'),
+                            ->live()
+                            ->default('petani'),
+
+                        Select::make('farmer_id')
+                            ->label('Profil Petani')
+                            ->options(function (?User $record): array {
+                                return Farmer::query()
+                                    ->where(function ($query) use ($record) {
+                                        $query->whereDoesntHave('user');
+
+                                        if ($record?->farmer_id) {
+                                            $query->orWhere('id', $record->farmer_id);
+                                        }
+                                    })
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(fn (Farmer $farmer) => [
+                                        $farmer->id => "{$farmer->name} ({$farmer->farmer_code})",
+                                    ])
+                                    ->all();
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->hidden(fn (): bool => ! Access::hasFarmerLinking())
+                            ->visible(fn (Get $get): bool => $get('role') === 'petani')
+                            ->required(fn (Get $get): bool => $get('role') === 'petani')
+                            ->helperText('Wajib dipilih agar pengguna petani hanya melihat data setoran miliknya.'),
 
                         Toggle::make('is_active')
                             ->label('Status Aktif')
@@ -95,16 +135,29 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('username')
+                    ->label('Username')
+                    ->searchable()
+                    ->badge()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('role')
                     ->label('Role')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'owner' => 'danger',
                         'admin' => 'warning',
-                        'kasir' => 'primary',
+                        'petani' => 'primary',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn(string $state) => ucfirst($state)),
+
+                Tables\Columns\TextColumn::make('farmer.name')
+                    ->label('Profil Petani')
+                    ->description(fn (User $record) => $record->farmer?->farmer_code)
+                    ->placeholder('-')
+                    ->visible(fn (): bool => Access::hasFarmerLinking())
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktif')
@@ -129,7 +182,7 @@ class UserResource extends Resource
                     ->options([
                         'owner' => 'Owner',
                         'admin' => 'Admin',
-                        'kasir' => 'Kasir',
+                        'petani' => 'Petani',
                     ]),
 
                 Tables\Filters\SelectFilter::make('is_active')
@@ -140,20 +193,17 @@ class UserResource extends Resource
                     ]),
             ])
             ->actions([
-                Actions\EditAction::make(),
+                Actions\EditAction::make()
+                    ->visible(fn (): bool => static::canEdit(new User())),
                 Actions\Action::make('toggle_active')
                     ->label(fn(User $record) => $record->is_active ? 'Nonaktifkan' : 'Aktifkan')
                     ->icon(fn(User $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                     ->color(fn(User $record) => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
-                    ->hidden(fn(User $record) => $record->role === 'owner')
+                    ->visible(fn(User $record) => Access::can('users.custom') && $record->role !== 'owner')
                     ->action(fn(User $record) => $record->update([ 'is_active' => !$record->is_active ])),
             ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
-                ]),
-            ])
+            ->bulkActions([])
             ->defaultSort('created_at', 'desc');
     }
 
@@ -179,5 +229,35 @@ class UserResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'primary';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! Access::petani() && Access::can('users.view');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return ! Access::petani() && Access::can('users.view');
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('users.view');
+    }
+
+    public static function canCreate(): bool
+    {
+        return ! Access::petani() && Access::can('users.create');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('users.edit');
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return ! Access::petani() && Access::can('users.delete') && $record->role !== 'owner';
     }
 }
