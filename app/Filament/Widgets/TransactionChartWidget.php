@@ -2,11 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Transaction;
 use App\Models\Sale;
+use App\Models\Transaction;
 use App\Support\Access;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 
 class TransactionChartWidget extends ChartWidget
 {

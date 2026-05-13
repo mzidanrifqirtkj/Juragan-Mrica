@@ -5,8 +5,8 @@ namespace App\Filament\Resources\SaleResource\Pages;
 use App\Filament\Resources\SaleResource;
 use App\Support\Access;
 use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 
 class EditSale extends EditRecord
 {
@@ -23,7 +23,7 @@ class EditSale extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data[ 'total_amount' ] = (float) $data[ 'weight_kg' ] * (float) $data[ 'price_per_kg' ];
+        $data['total_amount'] = (float) $data['weight_kg'] * (float) $data['price_per_kg'];
 
         return $data;
     }

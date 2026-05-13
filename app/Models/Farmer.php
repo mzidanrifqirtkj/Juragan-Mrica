@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\CodeGeneratorService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Services\CodeGeneratorService;
 
 class Farmer extends Model
 {
@@ -93,6 +93,7 @@ class Farmer extends Model
     public function getAverageWeightAttribute(): float
     {
         $count = $this->transaction_count;
+
         return $count > 0 ? $this->total_weight / $count : 0;
     }
 }

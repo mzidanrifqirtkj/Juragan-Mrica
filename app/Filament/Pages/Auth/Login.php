@@ -3,8 +3,8 @@
 namespace App\Filament\Pages\Auth;
 
 use Filament\Auth\Pages\Login as BaseLogin;
-use Filament\Schemas\Components\Component;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
 use Illuminate\Validation\ValidationException;
 use SensitiveParameter;
 

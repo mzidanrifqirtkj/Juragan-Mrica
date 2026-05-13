@@ -5,23 +5,19 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\FarmerResource\Pages;
 use App\Filament\Resources\FarmerResource\RelationManagers;
 use App\Models\Farmer;
-use App\Models\User;
 use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use UnitEnum;
 
 class FarmerResource extends Resource
@@ -152,7 +148,7 @@ class FarmerResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make()
-                    ->visible(fn (): bool => static::canEdit(new Farmer())),
+                    ->visible(fn (): bool => static::canEdit(new Farmer)),
                 Actions\Action::make('create_user')
                     ->label('Buatkan Akun')
                     ->icon('heroicon-o-user-plus')
@@ -160,12 +156,12 @@ class FarmerResource extends Resource
                     ->url(fn (Farmer $record): string => static::getCreateUserUrl($record))
                     ->visible(fn (Farmer $record): bool => static::canCreateUser($record)),
                 Actions\Action::make('toggle_active')
-                    ->label(fn(Farmer $record) => $record->is_active ? 'Nonaktifkan' : 'Aktifkan')
-                    ->icon(fn(Farmer $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                    ->color(fn(Farmer $record) => $record->is_active ? 'danger' : 'success')
+                    ->label(fn (Farmer $record) => $record->is_active ? 'Nonaktifkan' : 'Aktifkan')
+                    ->icon(fn (Farmer $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
+                    ->color(fn (Farmer $record) => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
                     ->visible(fn (): bool => Access::can('farmers.custom'))
-                    ->action(fn(Farmer $record) => $record->update([ 'is_active' => !$record->is_active ])),
+                    ->action(fn (Farmer $record) => $record->update(['is_active' => ! $record->is_active])),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
@@ -176,13 +172,13 @@ class FarmerResource extends Resource
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->visible(fn (): bool => Access::can('farmers.custom'))
-                        ->action(fn($records) => $records->each->update([ 'is_active' => true ])),
+                        ->action(fn ($records) => $records->each->update(['is_active' => true])),
                     Actions\BulkAction::make('deactivate')
                         ->label('Nonaktifkan')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->visible(fn (): bool => Access::can('farmers.custom'))
-                        ->action(fn($records) => $records->each->update([ 'is_active' => false ])),
+                        ->action(fn ($records) => $records->each->update(['is_active' => false])),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

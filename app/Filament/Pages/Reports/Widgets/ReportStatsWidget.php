@@ -2,8 +2,8 @@
 
 namespace App\Filament\Pages\Reports\Widgets;
 
-use App\Models\Transaction;
 use App\Models\Sale;
+use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Carbon;
@@ -11,7 +11,7 @@ use Livewire\Attributes\Reactive;
 
 /**
  * Widget Statistik Ringkasan untuk halaman Laporan
- * 
+ *
  * Menampilkan 4 stat card utama:
  * - Total Pembelian
  * - Total Penjualan
@@ -52,25 +52,25 @@ class ReportStatsWidget extends BaseWidget
         $priceGap = $avgSellPrice - $avgBuyPrice;
 
         return [
-            Stat::make('Total Pembelian', 'Rp ' . number_format($totalPurchaseAmount, 0, ',', '.'))
-                ->description(number_format($totalPurchaseWeight, 2) . ' kg • ' . $purchaseCount . ' transaksi')
+            Stat::make('Total Pembelian', 'Rp '.number_format($totalPurchaseAmount, 0, ',', '.'))
+                ->description(number_format($totalPurchaseWeight, 2).' kg • '.$purchaseCount.' transaksi')
                 ->descriptionIcon('heroicon-m-arrow-down-tray')
                 ->color('info')
                 ->chart($this->getPurchaseChartData($start, $end)),
 
-            Stat::make('Total Penjualan', 'Rp ' . number_format($totalSalesAmount, 0, ',', '.'))
-                ->description(number_format($totalSalesWeight, 2) . ' kg • ' . $salesCount . ' transaksi')
+            Stat::make('Total Penjualan', 'Rp '.number_format($totalSalesAmount, 0, ',', '.'))
+                ->description(number_format($totalSalesWeight, 2).' kg • '.$salesCount.' transaksi')
                 ->descriptionIcon('heroicon-m-arrow-up-tray')
                 ->color('success')
                 ->chart($this->getSalesChartData($start, $end)),
 
-            Stat::make('Laba Kotor', 'Rp ' . number_format(abs($grossProfit), 0, ',', '.'))
-                ->description(($grossProfit >= 0 ? '+' : '-') . number_format(abs($profitMargin), 1) . '% margin')
+            Stat::make('Laba Kotor', 'Rp '.number_format(abs($grossProfit), 0, ',', '.'))
+                ->description(($grossProfit >= 0 ? '+' : '-').number_format(abs($profitMargin), 1).'% margin')
                 ->descriptionIcon($grossProfit >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($grossProfit >= 0 ? 'success' : 'danger'),
 
-            Stat::make('Selisih Harga/kg', 'Rp ' . number_format($priceGap, 0, ',', '.'))
-                ->description('Beli: Rp ' . number_format($avgBuyPrice, 0, ',', '.') . ' | Jual: Rp ' . number_format($avgSellPrice, 0, ',', '.'))
+            Stat::make('Selisih Harga/kg', 'Rp '.number_format($priceGap, 0, ',', '.'))
+                ->description('Beli: Rp '.number_format($avgBuyPrice, 0, ',', '.').' | Jual: Rp '.number_format($avgSellPrice, 0, ',', '.'))
                 ->descriptionIcon('heroicon-m-scale')
                 ->color($priceGap >= 0 ? 'warning' : 'danger'),
         ];

@@ -4,12 +4,12 @@ namespace App\Filament\Pages\Reports\Widgets;
 
 use App\Filament\Pages\Reports\Widgets\Concerns\HasReportPeriod;
 use App\Models\Sale;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class SalesDetailTableWidget extends BaseWidget
 {
@@ -40,10 +40,10 @@ class SalesDetailTableWidget extends BaseWidget
             return 'Tidak ada transaksi penjualan pada periode aktif.';
         }
 
-        return 'Modal Rp ' . number_format($totalBuyAmount, 0, ',', '.')
-            . ' • Jual Rp ' . number_format($totalSellAmount, 0, ',', '.')
-            . ' • Laba Rp ' . number_format($totalProfit, 0, ',', '.')
-            . ' • Margin ' . number_format($margin, 1) . '%';
+        return 'Modal Rp '.number_format($totalBuyAmount, 0, ',', '.')
+            .' • Jual Rp '.number_format($totalSellAmount, 0, ',', '.')
+            .' • Laba Rp '.number_format($totalProfit, 0, ',', '.')
+            .' • Margin '.number_format($margin, 1).'%';
     }
 
     public function table(Table $table): Table
@@ -128,7 +128,7 @@ class SalesDetailTableWidget extends BaseWidget
             ->emptyStateIcon('heroicon-o-inbox');
     }
 
-    protected function getTableQuery(): Builder | Relation | null
+    protected function getTableQuery(): Builder|Relation|null
     {
         [$start, $end] = $this->getPeriod();
 

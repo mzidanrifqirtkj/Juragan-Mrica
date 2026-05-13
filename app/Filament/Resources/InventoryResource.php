@@ -8,9 +8,9 @@ use App\Services\InventoryService;
 use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Forms\Components\DatePicker;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,12 +51,12 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'in'    => 'success',
-                        'out'   => 'danger',
+                    ->color(fn (string $state): string => match ($state) {
+                        'in' => 'success',
+                        'out' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state) => $state === 'in' ? 'Masuk' : 'Keluar'),
+                    ->formatStateUsing(fn (string $state) => $state === 'in' ? 'Masuk' : 'Keluar'),
 
                 Tables\Columns\TextColumn::make('weight_kg')
                     ->label('Berat')
@@ -69,28 +69,29 @@ class InventoryResource extends Resource
                     ->formatStateUsing(function (string $state) {
                         return match ($state) {
                             'purchase' => 'Setoran',
-                            'sale'     => 'Penjualan',
-                            default    => 'Manual'
+                            'sale' => 'Penjualan',
+                            default => 'Manual'
                         };
                     })
                     ->badge()
-                    ->color(fn(string $state) => match ($state) {
+                    ->color(fn (string $state) => match ($state) {
                         'purchase' => 'info',
-                        'sale'     => 'warning',
-                        default    => 'gray'
+                        'sale' => 'warning',
+                        default => 'gray'
                     }),
 
                 Tables\Columns\TextColumn::make('reference_code')
                     ->label('Kode Referensi')
                     ->getStateUsing(function (InventoryLog $record) {
                         $reference = $record->getReference();
+
                         return $reference?->transaction_code ?? $reference?->sale_code ?? '-';
                     }),
 
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Catatan')
                     ->limit(30)
-                    ->tooltip(fn(InventoryLog $record) => $record->notes),
+                    ->tooltip(fn (InventoryLog $record) => $record->notes),
 
                 Tables\Columns\TextColumn::make('current_stock')
                     ->label('Saldo Stok')
@@ -116,8 +117,8 @@ class InventoryResource extends Resource
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data[ 'from' ], fn(Builder $q, $date) => $q->whereDate('created_at', '>=', $date))
-                            ->when($data[ 'until' ], fn(Builder $q, $date) => $q->whereDate('created_at', '<=', $date));
+                            ->when($data['from'], fn (Builder $q, $date) => $q->whereDate('created_at', '>=', $date))
+                            ->when($data['until'], fn (Builder $q, $date) => $q->whereDate('created_at', '<=', $date));
                     }),
             ])
             ->actions([
@@ -162,12 +163,14 @@ class InventoryResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $stock = InventoryService::getCurrentStock();
-        return number_format($stock, 0) . ' kg';
+
+        return number_format($stock, 0).' kg';
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
         $status = InventoryService::getStockStatus();
-        return $status[ 'color' ];
+
+        return $status['color'];
     }
 }

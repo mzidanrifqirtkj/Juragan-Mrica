@@ -4,9 +4,9 @@ namespace App\Filament\Resources\FarmerResource\RelationManagers;
 
 use App\Support\Access;
 use Filament\Actions;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -70,12 +70,12 @@ class TransactionsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('payment_status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
-                        'paid'    => 'success',
-                        default   => 'gray',
+                        'paid' => 'success',
+                        default => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state) => $state === 'paid' ? 'Lunas' : 'Belum Bayar'),
+                    ->formatStateUsing(fn (string $state) => $state === 'paid' ? 'Lunas' : 'Belum Bayar'),
             ])
             ->filters([
                 //

@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -13,7 +14,7 @@ return new class extends Migration {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->string('sale_code')->unique(); // SALE-YYYYMMDD-001
-            $table->enum('sale_type', [ 'retail', 'bulk' ]); // retail=pasar, bulk=pengepul
+            $table->enum('sale_type', ['retail', 'bulk']); // retail=pasar, bulk=pengepul
             $table->string('buyer_name');
             $table->string('buyer_phone')->nullable();
             $table->decimal('weight_kg', 10, 2);

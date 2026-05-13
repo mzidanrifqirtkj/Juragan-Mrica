@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Filament\Resources\TransactionResource;
-use App\Services\InventoryService;
 use App\Support\Access;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -37,13 +36,13 @@ class ListTransactions extends ListRecords
                 ->icon('heroicon-o-rectangle-stack'),
             'hari_ini' => Tab::make('Hari Ini')
                 ->icon('heroicon-o-calendar')
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereDate('transaction_date', today())),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('transaction_date', today())),
             'minggu_ini' => Tab::make('Minggu Ini')
                 ->icon('heroicon-o-calendar-days')
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereBetween('transaction_date', [now()->startOfWeek(), now()->endOfWeek()])),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereBetween('transaction_date', [now()->startOfWeek(), now()->endOfWeek()])),
             'bulan_ini' => Tab::make('Bulan Ini')
                 ->icon('heroicon-o-calendar-date-range')
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereMonth('transaction_date', now()->month)->whereYear('transaction_date', now()->year)),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('transaction_date', now()->month)->whereYear('transaction_date', now()->year)),
         ];
     }
 }

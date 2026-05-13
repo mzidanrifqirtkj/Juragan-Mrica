@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\InventoryLog;
-use App\Models\Transaction;
 use App\Models\Sale;
 use App\Models\Setting;
+use App\Models\Transaction;
 
 class InventoryService
 {
@@ -15,6 +15,7 @@ class InventoryService
     public static function getCurrentStock(): float
     {
         $lastLog = InventoryLog::latest()->first();
+
         return $lastLog ? (float) $lastLog->current_stock : 0;
     }
 
@@ -46,7 +47,7 @@ class InventoryService
 
         // Prevent negative stock
         if ($newStock < 0) {
-            throw new \Exception('Stok tidak mencukupi. Stok saat ini: ' . $currentStock . ' kg');
+            throw new \Exception('Stok tidak mencukupi. Stok saat ini: '.$currentStock.' kg');
         }
 
         return InventoryLog::create([

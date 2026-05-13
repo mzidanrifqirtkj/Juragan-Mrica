@@ -2,26 +2,27 @@
 
 namespace App\Filament\Pages;
 
-use App\Support\Access;
-use App\Filament\Widgets\RecentTransactionsWidget;
 use App\Filament\Widgets\PetaniProfileWarningWidget;
+use App\Filament\Widgets\RecentTransactionsWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use App\Filament\Widgets\StockAlertWidget;
 use App\Filament\Widgets\StockOverviewWidget;
 use App\Filament\Widgets\TransactionChartWidget;
+use App\Support\Access;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 
 class Dashboard extends BaseDashboard
 {
     protected static string $routePath = '/';
 
-    public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
+    public static function getNavigationIcon(): string|\BackedEnum|Htmlable|null
     {
         return Heroicon::OutlinedHome;
     }
 
-    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
+    public function getTitle(): string|Htmlable
     {
         return 'Dashboard';
     }

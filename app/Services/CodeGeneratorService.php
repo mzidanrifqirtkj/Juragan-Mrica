@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Farmer;
-use App\Models\Transaction;
 use App\Models\Sale;
+use App\Models\Transaction;
 use Carbon\Carbon;
 
 class CodeGeneratorService
@@ -17,7 +17,7 @@ class CodeGeneratorService
     {
         $lastFarmer = Farmer::orderBy('id', 'desc')->first();
 
-        if (!$lastFarmer) {
+        if (! $lastFarmer) {
             return 'PET001';
         }
 
@@ -25,7 +25,7 @@ class CodeGeneratorService
         $lastNumber = (int) substr($lastFarmer->farmer_code, 3);
         $newNumber = $lastNumber + 1;
 
-        return 'PET' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+        return 'PET'.str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -42,15 +42,15 @@ class CodeGeneratorService
             ->orderBy('transaction_code', 'desc')
             ->first();
 
-        if (!$lastTransaction) {
-            return $prefix . '001';
+        if (! $lastTransaction) {
+            return $prefix.'001';
         }
 
         // Extract number from last code
         $lastNumber = (int) substr($lastTransaction->transaction_code, -3);
         $newNumber = $lastNumber + 1;
 
-        return $prefix . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -67,14 +67,14 @@ class CodeGeneratorService
             ->orderBy('sale_code', 'desc')
             ->first();
 
-        if (!$lastSale) {
-            return $prefix . '001';
+        if (! $lastSale) {
+            return $prefix.'001';
         }
 
         // Extract number from last code
         $lastNumber = (int) substr($lastSale->sale_code, -3);
         $newNumber = $lastNumber + 1;
 
-        return $prefix . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 }

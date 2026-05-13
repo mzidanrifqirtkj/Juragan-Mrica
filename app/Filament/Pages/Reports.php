@@ -2,6 +2,13 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Pages\Reports\Widgets\DailyTrendChartWidget;
+use App\Filament\Pages\Reports\Widgets\ReportInsightStatsWidget;
+use App\Filament\Pages\Reports\Widgets\ReportStatsWidget;
+use App\Filament\Pages\Reports\Widgets\SalesChannelsTableWidget;
+use App\Filament\Pages\Reports\Widgets\SalesDetailTableWidget;
+use App\Filament\Pages\Reports\Widgets\SalesTypeChartWidget;
+use App\Filament\Pages\Reports\Widgets\TopFarmersTableWidget;
 use App\Models\Farmer;
 use App\Models\Sale;
 use App\Models\Transaction;
@@ -109,8 +116,8 @@ class Reports extends Page implements HasForms
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Pages\Reports\Widgets\ReportStatsWidget::class,
-            \App\Filament\Pages\Reports\Widgets\ReportInsightStatsWidget::class,
+            ReportStatsWidget::class,
+            ReportInsightStatsWidget::class,
         ];
     }
 
@@ -122,11 +129,11 @@ class Reports extends Page implements HasForms
     protected function getFooterWidgets(): array
     {
         return [
-            \App\Filament\Pages\Reports\Widgets\SalesChannelsTableWidget::class,
-            \App\Filament\Pages\Reports\Widgets\SalesDetailTableWidget::class,
-            \App\Filament\Pages\Reports\Widgets\TopFarmersTableWidget::class,
-            \App\Filament\Pages\Reports\Widgets\DailyTrendChartWidget::class,
-            \App\Filament\Pages\Reports\Widgets\SalesTypeChartWidget::class,
+            SalesChannelsTableWidget::class,
+            SalesDetailTableWidget::class,
+            TopFarmersTableWidget::class,
+            DailyTrendChartWidget::class,
+            SalesTypeChartWidget::class,
         ];
     }
 

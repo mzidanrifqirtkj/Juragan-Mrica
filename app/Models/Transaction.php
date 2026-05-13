@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\CodeGeneratorService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Services\CodeGeneratorService;
 
 class Transaction extends Model
 {
@@ -125,7 +124,7 @@ class Transaction extends Model
      */
     public function scopeDateRange($query, $startDate, $endDate)
     {
-        return $query->whereBetween('transaction_date', [ $startDate, $endDate ]);
+        return $query->whereBetween('transaction_date', [$startDate, $endDate]);
     }
 
     /**

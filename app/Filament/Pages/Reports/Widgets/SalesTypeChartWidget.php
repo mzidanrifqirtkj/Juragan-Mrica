@@ -9,7 +9,7 @@ use Livewire\Attributes\Reactive;
 
 /**
  * Widget Chart Komposisi Penjualan
- * 
+ *
  * Menampilkan doughnut chart distribusi penjualan per tipe
  */
 class SalesTypeChartWidget extends ChartWidget
@@ -45,11 +45,11 @@ class SalesTypeChartWidget extends ChartWidget
         $warehouse = Sale::where('sale_type', 'warehouse')
             ->whereBetween('sale_date', [$start, $end])
             ->sum('total_amount');
-            
+
         $market = Sale::where('sale_type', 'market')
             ->whereBetween('sale_date', [$start, $end])
             ->sum('total_amount');
-            
+
         $retail = Sale::where('sale_type', 'retail')
             ->whereBetween('sale_date', [$start, $end])
             ->sum('total_amount');

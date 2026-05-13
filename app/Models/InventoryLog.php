@@ -47,8 +47,8 @@ class InventoryLog extends Model
     {
         return match ($this->reference_type) {
             'purchase' => $this->transaction,
-            'sale'     => $this->sale,
-            default    => null,
+            'sale' => $this->sale,
+            default => null,
         };
     }
 
@@ -58,6 +58,7 @@ class InventoryLog extends Model
     public function getReferenceCodeAttribute(): ?string
     {
         $reference = $this->getReference();
+
         return $reference?->transaction_code ?? $reference?->sale_code ?? null;
     }
 
@@ -99,8 +100,8 @@ class InventoryLog extends Model
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
-            'in'    => 'Masuk',
-            'out'   => 'Keluar',
+            'in' => 'Masuk',
+            'out' => 'Keluar',
             default => $this->type,
         };
     }
@@ -111,8 +112,8 @@ class InventoryLog extends Model
     public function getTypeBadgeColorAttribute(): string
     {
         return match ($this->type) {
-            'in'    => 'success',
-            'out'   => 'danger',
+            'in' => 'success',
+            'out' => 'danger',
             default => 'gray',
         };
     }

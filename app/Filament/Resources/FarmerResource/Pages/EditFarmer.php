@@ -5,8 +5,8 @@ namespace App\Filament\Resources\FarmerResource\Pages;
 use App\Filament\Resources\FarmerResource;
 use App\Support\Access;
 use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 
 class EditFarmer extends EditRecord
 {

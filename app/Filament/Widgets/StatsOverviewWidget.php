@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use App\Support\Access;
-use App\Models\Transaction;
-use App\Models\Sale;
 use App\Models\Farmer;
+use App\Models\Sale;
+use App\Models\Transaction;
+use App\Support\Access;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -40,24 +40,24 @@ class StatsOverviewWidget extends BaseWidget
             $monthTotal = (clone $monthTransactions)->sum('total_amount');
 
             return [
-                Stat::make('Setoran Saya Bulan Ini', number_format($monthWeight, 2) . ' kg')
-                    ->description((clone $monthTransactions)->count() . ' transaksi setoran tercatat')
+                Stat::make('Setoran Saya Bulan Ini', number_format($monthWeight, 2).' kg')
+                    ->description((clone $monthTransactions)->count().' transaksi setoran tercatat')
                     ->descriptionIcon('heroicon-m-arrow-down-tray')
                     ->color('primary')
                     ->chart($this->getTransactionChartData()),
 
-                Stat::make('Nilai Setoran Saya', 'Rp ' . number_format($monthTotal, 0, ',', '.'))
-                    ->description('Akumulasi nilai setoran bulan ' . now()->translatedFormat('F'))
+                Stat::make('Nilai Setoran Saya', 'Rp '.number_format($monthTotal, 0, ',', '.'))
+                    ->description('Akumulasi nilai setoran bulan '.now()->translatedFormat('F'))
                     ->descriptionIcon('heroicon-m-banknotes')
                     ->color('success'),
 
-                Stat::make('Menunggu Pembayaran', $pendingTransactions . ' transaksi')
+                Stat::make('Menunggu Pembayaran', $pendingTransactions.' transaksi')
                     ->description('Setoran yang belum dibayar')
                     ->descriptionIcon('heroicon-m-clock')
                     ->color($pendingTransactions > 0 ? 'warning' : 'gray'),
 
-                Stat::make('Sudah Dibayar', $paidTransactions . ' transaksi')
-                    ->description(number_format((clone $todayTransactions)->sum('weight_kg'), 2) . ' kg disetor hari ini')
+                Stat::make('Sudah Dibayar', $paidTransactions.' transaksi')
+                    ->description(number_format((clone $todayTransactions)->sum('weight_kg'), 2).' kg disetor hari ini')
                     ->descriptionIcon('heroicon-m-check-badge')
                     ->color('info'),
             ];
@@ -76,25 +76,25 @@ class StatsOverviewWidget extends BaseWidget
         $totalFarmers = Farmer::count();
 
         return [
-            Stat::make('Setoran Hari Ini', $todayTransactionsCount . ' transaksi')
-                ->description(number_format($todayWeight, 1) . ' kg diterima hari ini')
+            Stat::make('Setoran Hari Ini', $todayTransactionsCount.' transaksi')
+                ->description(number_format($todayWeight, 1).' kg diterima hari ini')
                 ->descriptionIcon('heroicon-m-arrow-down-tray')
                 ->color('primary')
                 ->chart($this->getTransactionChartData()),
 
-            Stat::make('Penjualan Hari Ini', $todaySalesCount . ' transaksi')
-                ->description('Rp ' . number_format($todaySalesAmount, 0, ',', '.') . ' pendapatan')
+            Stat::make('Penjualan Hari Ini', $todaySalesCount.' transaksi')
+                ->description('Rp '.number_format($todaySalesAmount, 0, ',', '.').' pendapatan')
                 ->descriptionIcon('heroicon-m-arrow-up-tray')
                 ->color('success')
                 ->chart($this->getSalesChartData()),
 
-            Stat::make('Petani Aktif', $activeFarmers . ' petani')
-                ->description('Dari total ' . $totalFarmers . ' petani terdaftar')
+            Stat::make('Petani Aktif', $activeFarmers.' petani')
+                ->description('Dari total '.$totalFarmers.' petani terdaftar')
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('info'),
 
-            Stat::make('Laba Bulan Ini', 'Rp ' . number_format(abs($profit), 0, ',', '.'))
-                ->description($profit >= 0 ? 'Profit bulan ' . now()->translatedFormat('F') : 'Kerugian bulan ' . now()->translatedFormat('F'))
+            Stat::make('Laba Bulan Ini', 'Rp '.number_format(abs($profit), 0, ',', '.'))
+                ->description($profit >= 0 ? 'Profit bulan '.now()->translatedFormat('F') : 'Kerugian bulan '.now()->translatedFormat('F'))
                 ->descriptionIcon($profit >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($profit >= 0 ? 'success' : 'danger'),
         ];
@@ -109,6 +109,7 @@ class StatsOverviewWidget extends BaseWidget
                 ->whereDate('transaction_date', $date)
                 ->count();
         }
+
         return $data;
     }
 
@@ -119,6 +120,7 @@ class StatsOverviewWidget extends BaseWidget
             $date = now()->subDays($i);
             $data[] = Sale::whereDate('sale_date', $date)->count();
         }
+
         return $data;
     }
 }

@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\TransactionResource\Pages;
 
 use App\Filament\Resources\TransactionResource;
-use Filament\Actions;
-use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 
 class CreateTransaction extends CreateRecord
@@ -14,8 +13,8 @@ class CreateTransaction extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data[ 'created_by' ] = Auth::id();
-        $data[ 'total_amount' ] = (float) $data[ 'weight_kg' ] * (float) $data[ 'price_per_kg' ];
+        $data['created_by'] = Auth::id();
+        $data['total_amount'] = (float) $data['weight_kg'] * (float) $data['price_per_kg'];
 
         return $data;
     }

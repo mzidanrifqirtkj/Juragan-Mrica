@@ -5,11 +5,11 @@ namespace App\Filament\Pages\Reports\Widgets;
 use App\Filament\Pages\Reports\Widgets\Concerns\HasReportPeriod;
 use App\Models\Farmer;
 use App\Models\Transaction;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class TopFarmersTableWidget extends BaseWidget
 {
@@ -73,7 +73,7 @@ class TopFarmersTableWidget extends BaseWidget
             ->emptyStateIcon('heroicon-o-user-group');
     }
 
-    protected function getTableQuery(): Builder | Relation | null
+    protected function getTableQuery(): Builder|Relation|null
     {
         [$start, $end] = $this->getPeriod();
 

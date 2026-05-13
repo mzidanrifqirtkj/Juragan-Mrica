@@ -62,7 +62,7 @@ class TransactionObserver
     public function restored(Transaction $transaction): void
     {
         // Re-create inventory log if transaction is restored (soft delete)
-        InventoryService::addStock($transaction, 'Dipulihkan: Setoran dari ' . $transaction->farmer->name);
+        InventoryService::addStock($transaction, 'Dipulihkan: Setoran dari '.$transaction->farmer->name);
     }
 
     /**

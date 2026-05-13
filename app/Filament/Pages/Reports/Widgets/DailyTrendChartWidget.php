@@ -2,15 +2,15 @@
 
 namespace App\Filament\Pages\Reports\Widgets;
 
-use App\Models\Transaction;
 use App\Models\Sale;
+use App\Models\Transaction;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Reactive;
 
 /**
  * Widget Chart Trend Harian
- * 
+ *
  * Menampilkan line chart perbandingan pembelian vs penjualan harian
  */
 class DailyTrendChartWidget extends ChartWidget

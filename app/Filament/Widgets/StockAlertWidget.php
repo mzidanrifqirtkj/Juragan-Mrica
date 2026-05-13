@@ -30,8 +30,8 @@ class StockAlertWidget extends BaseWidget
         $targetStock = (float) Setting::get('target_stock', 1000);
 
         if (InventoryService::hasReachedTarget()) {
-            $stat = Stat::make('Target Stok Tercapai', number_format($currentStock, 2) . ' kg')
-                ->description('Stok sudah melewati target ' . number_format($targetStock, 0) . ' kg. Siap membuat penjualan bulk.')
+            $stat = Stat::make('Target Stok Tercapai', number_format($currentStock, 2).' kg')
+                ->description('Stok sudah melewati target '.number_format($targetStock, 0).' kg. Siap membuat penjualan bulk.')
                 ->descriptionIcon('heroicon-o-check-circle')
                 ->color('success');
 
@@ -45,7 +45,7 @@ class StockAlertWidget extends BaseWidget
         }
 
         if (InventoryService::isLowStock()) {
-            $stat = Stat::make('Stok Gudang Rendah', number_format($currentStock, 2) . ' kg')
+            $stat = Stat::make('Stok Gudang Rendah', number_format($currentStock, 2).' kg')
                 ->description('Segera input setoran agar stok aman untuk penjualan berikutnya.')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color('danger');
@@ -60,7 +60,7 @@ class StockAlertWidget extends BaseWidget
         }
 
         return [
-            Stat::make('Hampir Mencapai Target', number_format(max($targetStock - $currentStock, 0), 2) . ' kg lagi')
+            Stat::make('Hampir Mencapai Target', number_format(max($targetStock - $currentStock, 0), 2).' kg lagi')
                 ->description('Persiapkan penjualan bulk karena stok sudah mendekati target.')
                 ->descriptionIcon('heroicon-o-bell-alert')
                 ->color('warning'),

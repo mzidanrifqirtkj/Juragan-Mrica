@@ -19,6 +19,7 @@ return new class extends Migration
 
             if ($roleName === 'owner') {
                 $role->syncPermissions($permissions);
+
                 continue;
             }
 

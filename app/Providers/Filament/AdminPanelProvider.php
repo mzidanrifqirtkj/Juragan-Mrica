@@ -5,6 +5,11 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\MyProfile;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Widgets\RecentTransactionsWidget;
+use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Widgets\StockAlertWidget;
+use App\Filament\Widgets\StockOverviewWidget;
+use App\Filament\Widgets\TransactionChartWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,48 +38,48 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(null)
             ->favicon(null)
             ->colors([
-                    'primary' => Color::Emerald,
-                    'danger' => Color::Rose,
-                    'warning' => Color::Amber,
-                    'success' => Color::Green,
-                    'info' => Color::Blue,
-                ])
+                'primary' => Color::Emerald,
+                'danger' => Color::Rose,
+                'warning' => Color::Amber,
+                'success' => Color::Green,
+                'info' => Color::Blue,
+            ])
             ->font('Inter')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                    Dashboard::class,
-                ])
+                Dashboard::class,
+            ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                    \App\Filament\Widgets\StockOverviewWidget::class,
-                    \App\Filament\Widgets\StatsOverviewWidget::class,
-                    \App\Filament\Widgets\StockAlertWidget::class,
-                    \App\Filament\Widgets\TransactionChartWidget::class,
-                    \App\Filament\Widgets\RecentTransactionsWidget::class,
-                ])
+                StockOverviewWidget::class,
+                StatsOverviewWidget::class,
+                StockAlertWidget::class,
+                TransactionChartWidget::class,
+                RecentTransactionsWidget::class,
+            ])
             ->middleware([
-                    EncryptCookies::class,
-                    AddQueuedCookiesToResponse::class,
-                    StartSession::class,
-                    AuthenticateSession::class,
-                    ShareErrorsFromSession::class,
-                    VerifyCsrfToken::class,
-                    SubstituteBindings::class,
-                    DisableBladeIconComponents::class,
-                    DispatchServingFilamentEvent::class,
-                ])
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
             ->authMiddleware([
-                    Authenticate::class,
-                ])
+                Authenticate::class,
+            ])
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
-                    'Transaksi',
-                    'Penyimpanan',
-                    'Laporan',
-                    'Master Data',
-                    'Pengaturan',
-                ])
+                'Transaksi',
+                'Penyimpanan',
+                'Laporan',
+                'Master Data',
+                'Pengaturan',
+            ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s');
     }

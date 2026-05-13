@@ -4,19 +4,25 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
+        if (! Schema::hasColumn('sales', 'sale_type')) {
+            return;
+        }
+
         Schema::table('sales', function (Blueprint $table) {
-            // Update enum untuk sale_type
+            $table->dropIndex('sales_sale_type_index');
             $table->dropColumn('sale_type');
         });
 
         Schema::table('sales', function (Blueprint $table) {
-            $table->enum('sale_type', [ 'warehouse', 'market', 'retail' ])->default('warehouse')->after('sale_code');
+            $table->string('sale_type', 20)->default('warehouse');
+            $table->index('sale_type');
         });
     }
 
@@ -25,12 +31,17 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        if (! Schema::hasColumn('sales', 'sale_type')) {
+            return;
+        }
+
         Schema::table('sales', function (Blueprint $table) {
+            $table->dropIndex('sales_sale_type_index');
             $table->dropColumn('sale_type');
         });
 
         Schema::table('sales', function (Blueprint $table) {
-            $table->enum('sale_type', [ 'retail', 'bulk' ])->after('sale_code');
+            $table->string('sale_type', 20)->default('retail');
         });
     }
 };

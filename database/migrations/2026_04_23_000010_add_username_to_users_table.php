@@ -57,7 +57,7 @@ return new class extends Migration
 
         while (DB::table('users')->where('username', $username)->exists()) {
             $suffix++;
-            $username = $base . $suffix;
+            $username = $base.$suffix;
         }
 
         return $username;

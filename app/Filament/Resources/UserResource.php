@@ -8,17 +8,17 @@ use App\Models\User;
 use App\Support\Access;
 use BackedEnum;
 use Filament\Actions;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 use UnitEnum;
 
 class UserResource extends Resource
@@ -68,13 +68,12 @@ class UserResource extends Resource
                         TextInput::make('password')
                             ->label('Password')
                             ->password()
-                            ->required(fn(string $operation): bool => $operation === 'create')
-                            ->dehydrateStateUsing(fn($state) => $state ? Hash::make($state) : null)
-                            ->dehydrated(fn($state) => filled($state))
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->dehydrateStateUsing(fn ($state) => $state ? Hash::make($state) : null)
+                            ->dehydrated(fn ($state) => filled($state))
                             ->minLength(8)
                             ->helperText(
-                                fn(string $operation): string =>
-                                $operation === 'edit' ? 'Kosongkan jika tidak ingin mengubah password' : ''
+                                fn (string $operation): string => $operation === 'edit' ? 'Kosongkan jika tidak ingin mengubah password' : ''
                             ),
 
                         Select::make('role')
@@ -144,13 +143,13 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('role')
                     ->label('Role')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'owner' => 'danger',
                         'admin' => 'warning',
                         'petani' => 'primary',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state) => ucfirst($state)),
+                    ->formatStateUsing(fn (string $state) => ucfirst($state)),
 
                 Tables\Columns\TextColumn::make('farmer.name')
                     ->label('Profil Petani')
@@ -194,14 +193,14 @@ class UserResource extends Resource
             ])
             ->actions([
                 Actions\EditAction::make()
-                    ->visible(fn (): bool => static::canEdit(new User())),
+                    ->visible(fn (): bool => static::canEdit(new User)),
                 Actions\Action::make('toggle_active')
-                    ->label(fn(User $record) => $record->is_active ? 'Nonaktifkan' : 'Aktifkan')
-                    ->icon(fn(User $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                    ->color(fn(User $record) => $record->is_active ? 'danger' : 'success')
+                    ->label(fn (User $record) => $record->is_active ? 'Nonaktifkan' : 'Aktifkan')
+                    ->icon(fn (User $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
+                    ->color(fn (User $record) => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
-                    ->visible(fn(User $record) => Access::can('users.custom') && $record->role !== 'owner')
-                    ->action(fn(User $record) => $record->update([ 'is_active' => !$record->is_active ])),
+                    ->visible(fn (User $record) => Access::can('users.custom') && $record->role !== 'owner')
+                    ->action(fn (User $record) => $record->update(['is_active' => ! $record->is_active])),
             ])
             ->bulkActions([])
             ->defaultSort('created_at', 'desc');
