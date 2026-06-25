@@ -1,0 +1,42 @@
+name: Juragan Mrica
+
+# Jalankan skrip ini hanya ketika ada push ke branch 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Eksekusi Deployment via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_VPS }}
+          username: ${{ secrets.USERNAME_VPS }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # 1. Masuk ke direktori project
+            cd /var/www/Juragan-Mrica
+
+            # 2. Ambil kode terbaru dari GitHub
+            git pull origin main
+
+            # 3. Install dependensi PHP terbaru
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+            # 4. Jalankan migrasi database jika ada tabel baru
+            php artisan migrate --force
+
+            # 5. Install dan build frontend (Tailwind/Filament)
+            npm install
+            npm run build
+
+            # 6. Optimasi dan hapus cache
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan filament:optimize

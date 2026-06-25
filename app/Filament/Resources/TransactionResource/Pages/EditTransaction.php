@@ -7,10 +7,13 @@ use App\Support\Access;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Enums\Width;
 
 class EditTransaction extends EditRecord
 {
     protected static string $resource = TransactionResource::class;
+
+    protected Width | string | null $maxContentWidth = Width::Full;
 
     protected function getHeaderActions(): array
     {

@@ -15,6 +15,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -125,9 +126,22 @@ class TransactionResource extends Resource
                             ->label('Bukti Transfer')
                             ->image()
                             ->maxSize(2048)
-                            ->disk('public')
-                            ->directory('payment-proofs')
-                            ->visibility('public')
+                            ->disk('s3')
+                            ->directory(function (Get $get) {
+                                $user = auth()->id();
+                                $role = $user?->role ?? 'unknown';
+
+                                $farmerId = $get('farmer_id');
+                                $farmerName = 'unknown';
+                                if ($farmerId) {
+                                    $farmer = \App\Models\Farmer::find($farmerId);
+                                    $farmerName = $farmer ? str_replace('/', '-', $farmer->name) : 'unknown';
+                                }
+
+                                $date = now()->format('Y-m-d');
+
+                                return "payment-proofs/{$role}/{$farmerName}/{$date}";
+                            })
                             ->visible(fn (Get $get): bool => $get('payment_method') === 'transfer')
                             ->helperText('Upload foto bukti transfer (max 2MB)'),
 
@@ -358,9 +372,9 @@ class TransactionResource extends Resource
                             ->badge()
                             ->formatStateUsing(fn (string $state) => $state === 'cash' ? 'Tunai' : 'Transfer'),
 
-                        TextEntry::make('payment_proof')
+                        ImageEntry::make('payment_proof')
                             ->label('Bukti Transfer')
-                            ->image()
+                            ->disk('s3')
                             ->visible(fn (Transaction $record): bool => $record->payment_method === 'transfer' && filled($record->payment_proof))
                             ->columnSpanFull(),
 
@@ -375,7 +389,7 @@ class TransactionResource extends Resource
                             ->label('Catatan')
                             ->columnSpanFull(),
                     ])
-                    ->columns(3),
+                    ->columns(2),
             ]);
     }
 
